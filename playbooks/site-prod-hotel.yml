@@ -1,0 +1,133 @@
+- hosts: localhost
+  roles:
+    - nginx
+  vars:
+    nginx_remove_default_vhost: true
+    nginx_vhosts:
+      - listen: "80"
+        server_name: "hotel-admin.fncul.com"
+        root: "/srv/hotel-admin-dadi01-com/dist"
+        access_log: "/data/logs/nginx/hotel-admin.fncul.com.access.log main"
+        error_log: "/data/logs/nginx/hotel-admin.fncul.com.error.log"
+        index: "index.html index.htm"
+        state: "present"
+        template: "{{ nginx_vhost_template }}"
+        extra_parameters: |
+          location / {
+              try_files $uri /index.html;
+              proxy_set_header   X-Forwarded-For $remote_addr;
+              proxy_set_header   Host $http_host;
+          }
+          location ^~ /api/
+          {
+              proxy_set_header   Host hotel-api.fncul.com;
+              proxy_pass http://hotel-api.fncul.com/api/;
+          }
+          location ~ .*\.(gif|jpg|jpeg|png|bmp|swf)$
+          {
+              expires      30d;
+              access_log off; 
+          }
+          location ~ .*\.(js|css)?$
+          {
+              access_log off; 
+              expires      12h;
+          }
+      - listen: "80"
+        server_name: "hotel-clean.fncul.com"
+        root: "/srv/hotel-clean-dadi01-com/public"
+        access_log: "/data/logs/nginx/hotel-clean.fncul.com.access.log main"
+        error_log: "/data/logs/nginx/hotel-clean.fncul.com.error.log"
+        index: "index.html index.htm index.php"
+        state: "present"
+        template: "{{ nginx_vhost_template }}"
+        extra_parameters: |
+          if (!-e $request_filename) {
+            rewrite ^/index.php(.*)$ /index.php?s=$1 last;
+            rewrite ^(.*)$ /index.php?s=$1 last;
+            break;
+          }
+          location / {
+              try_files $uri $uri/ =404;
+          }
+          location ~ \.php$ {
+              include snippets/fastcgi-php.conf;
+              fastcgi_pass unix:/dev/shm/php-fpm.sock;
+          }
+      - listen: "80"
+        server_name: "hotel-api.fncul.com"
+        root: "/srv/hotel-dadi01-com/public"
+        access_log: "/data/logs/nginx/hotel-api.fncul.com.access.log main"
+        error_log: "/data/logs/nginx/hotel-api.fncul.com.error.log"
+        index: "index.html index.htm index.php"
+        state: "present"
+        template: "{{ nginx_vhost_template }}"
+        extra_parameters: |
+          if (!-e $request_filename) {
+            rewrite ^/index.php(.*)$ /index.php?s=$1 last;
+            rewrite ^(.*)$ /index.php?s=$1 last;
+            break;
+          }
+          location / {
+              try_files $uri $uri/ =404;
+          }
+          location ~ \.php$ {
+              include snippets/fastcgi-php.conf;
+              fastcgi_pass unix:/dev/shm/php-fpm.sock;
+          }
+      - listen: "80"
+        server_name: "coupon-api.fncul.com"
+        root: "/srv/coupon-dadi01-com"
+        access_log: "/data/logs/nginx/coupon-api.fncul.com.access.log main"
+        error_log: "/data/logs/nginx/coupon-api.fncul.com.error.log"
+        index: "index.html index.htm index.php"
+        state: "present"
+        template: "{{ nginx_vhost_template }}"
+        extra_parameters: |
+          location / {
+              proxy_pass   http://127.0.0.1:9527;
+          }
+  tags: nginx
+
+
+- hosts: localhost
+  roles:
+    - php
+    - php-swoole
+    - php-xhprof
+  vars:
+    php_version: '7.2'
+  tags: php
+
+- hosts: localhost
+  roles:
+    - supervisor
+  vars:
+    supervisor_inet_http_server_enable: true
+    supervisor_user: root
+    supervisor_password: 'dd01newsuper'
+    supervisor_programs:
+      - name: 'hotel_horizon'
+        command: php /srv/hotel-dadi01-com/artisan horizon
+        configuration: |
+          process_name=%(program_name)s_%(process_num)s
+          numprocs=2
+          autostart = true
+          autorestart = true
+          stopasgroup=true
+          killasgroup=true
+          startsecs = 10
+          startretries = 3
+          user = www-data
+          stdout_logfile=/var/log/supervisor/hotel_horizon.log
+      - name: 'hotel-coupon'
+        command: /srv/hotel-coupon-backend/release/coupon
+        configuration: |
+          directory=/srv/hotel-coupon-backend
+          autostart = true
+          autorestart = true
+          startsecs = 10
+          startretries = 3
+          user = root
+          stdout_logfile=/var/log/supervisor/hotel-coupon.log
+  tags: supervisor

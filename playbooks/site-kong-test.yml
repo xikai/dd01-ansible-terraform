@@ -1,0 +1,65 @@
+- hosts: localhost
+  roles:
+    - nginx
+  vars:
+    nginx_remove_default_vhost: true
+    nginx_vhosts:
+      - listen: "80"
+        server_name: "gw.dadi01.net"
+        root: "/srv/newretail-api-gateway"
+        access_log: "/data/logs/nginx/gw.dadi01.net.access.log main"
+        error_log: "/data/logs/nginx/gw.dadi01.net.error.log"
+        index: "index.html index.htm index.php"
+        state: "present"
+        template: "{{ nginx_vhost_template }}"
+        extra_parameters: |
+          location / {
+              proxy_pass   http://127.0.0.1:8000;
+          }
+      - listen: "443"
+        server_name: "ssl.gw.dadi01.net gw.dadi01.net"
+        root: "/srv/newretail-api-gateway"
+        access_log: "/data/logs/nginx/gw.dadi01.net.access.log main"
+        error_log: "/data/logs/nginx/gw.dadi01.net.error.log"
+        index: "index.html index.htm index.php"
+        state: "present"
+        template: "{{ nginx_vhost_template }}"
+        extra_parameters: |
+          ssl on;
+          ssl_certificate cert/dadi01.net.pem;
+          ssl_certificate_key cert/dadi01.net.key;
+          ssl_session_timeout 5m;
+          ssl_ciphers ECDHE-RSA-AES128-GCM-SHA256:ECDHE:ECDH:AES:HIGH:!NULL:!aNULL:!MD5:!ADH:!RC4;
+          ssl_protocols TLSv1 TLSv1.1 TLSv1.2;
+          ssl_prefer_server_ciphers on;
+  
+          location / {
+              proxy_pass   http://127.0.0.1:8000;
+          }
+  tags: nginx
+
+- hosts: localhost
+  roles:
+    - kong
+  tags: kong
+
+
+- hosts: localhost
+  roles:
+    - supervisor
+  vars:
+    supervisor_inet_http_server_enable: true
+    supervisor_user: root
+    supervisor_password: 'dd01newsuper'
+    supervisor_programs:
+      - name: 'dd01_member_consumers'
+        command: /usr/local/openresty/bin/resty /usr/local/share/lua/5.1/kong/plugins/authentication/rabbitmq-cli/dd01_member_consumers.lua
+        configuration: |
+          directory=/usr/local/share/lua/5.1/kong/plugins/authentication/rabbitmq-cli/
+          autostart = true
+          autorestart = true
+          startsecs = 10
+          startretries = 3
+          user = www-data
+          stdout_logfile=/var/log/supervisor/dd01_member_consumers.log
+  tags: supervisor

@@ -1,0 +1,11 @@
+---
+- hosts: localhost
+  tasks:
+  - name: add authorized keys
+    authorized_key:
+      user: root
+      state: present
+      key: '{{ item }}'
+    with_file:
+      - public_keys/xikai.pub
+      - public_keys/runner.pub

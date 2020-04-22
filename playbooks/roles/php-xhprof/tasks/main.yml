@@ -1,0 +1,89 @@
+---
+### install php tideways xhprof
+
+- name: Download xhprof source code
+  get_url:
+    url: "https://github.com/tideways/php-xhprof-extension/archive/v{{ xhprof_version }}.tar.gz"
+    dest: "/opt/xhprof_v{{ xhprof_version }}.tar.gz"
+  register: xhprof_source
+
+- name: Unpacking xhprof
+  unarchive:
+    copy: no
+    dest: /opt/
+    src: "{{ xhprof_source.dest }}"
+  when: xhprof_source
+  register: xhprof_source_unpack
+
+- name: Phpize
+  command: phpize
+  args:
+    chdir: "/opt/php-xhprof-extension-{{ xhprof_version }}"
+  when: xhprof_source_unpack
+  register: xhprof_phpize
+
+- name: Configure
+  command: ./configure
+  args:
+    chdir: "/opt/php-xhprof-extension-{{ xhprof_version }}"
+  when: xhprof_phpize
+  register: xhprof_configure
+
+- name: Make xhprof
+  become: yes
+  shell: make && make install
+  args:
+    chdir: "/opt/php-xhprof-extension-{{ xhprof_version }}"
+  when: xhprof_configure
+  register: xhprof_install
+
+- name: Add tideways.so
+  lineinfile:
+    path: /etc/php/{{ php_version }}/mods-available/tideways.ini
+    line: "extension=tideways.so"
+    create: yes
+  when: xhprof_install
+  register: xhprof_add_ini
+
+- name: Add link
+  file:
+    src: "/etc/php/{{ php_version }}/mods-available/tideways.ini"
+    dest: "{{ item }}"
+    state: link
+  with_items:
+    - /etc/php/{{ php_version }}/cli/conf.d/tideways.ini
+    - /etc/php/{{ php_version }}/fpm/conf.d/tideways.ini
+  when: xhprof_add_ini
+
+- name: Restart php
+  shell: /etc/init.d/php{{ php_version }}-fpm restart
+  when: xhprof_add_ini
+
+#- name: Download tideways-daemon repository key
+#  get_url:
+#    url: "https://s3-eu-west-1.amazonaws.com/tideways/packages/EEB5E8F4.gpg"
+#    dest: "/tmp/EEB5E8F4.gpg"
+#  register: tideways_daemon_key
+#
+#
+#- name: Add tideways-daemon repository key
+#  apt_key:
+#    file: "{{ tideways_daemon_key.dest }}"
+#    state: present
+#  when: tideways_daemon_key
+#  register: tideways_daemon_key_added
+#
+#- name: Add tideways-daemon repository
+#  apt_repository:
+#    repo: deb http://s3-eu-west-1.amazonaws.com/tideways/packages debian main
+#    state: present
+#    filename: tideways
+#  when: tideways_daemon_key_added
+#  register: tideways_daemon_add_repo
+#
+#- name: Install tideways-daemon
+#  apt:
+#    name: tideways-daemon
+#    state: present
+#    update_cache: yes
+#  when: tideways_daemon_add_repo

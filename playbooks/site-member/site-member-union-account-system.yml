@@ -1,0 +1,42 @@
+- hosts: localhost
+  roles:
+    - nginx
+    - php
+    - php-swoole
+    - php-xhprof
+  vars:
+    php_version: '7.2'
+    nginx_remove_default_vhost: true
+    nginx_vhosts:
+      - listen: "80"
+        server_name: "member-union-account-system.kptest.cn"
+        root: "/srv/member-union-account-system/public"
+        access_log: "/var/log/nginx/member-union-account-system.kptest.cn.access.log"
+        error_log: "/var/log/nginx/member-union-account-system.kptest.cn.error.log"
+        index: "index index.html index.htm"
+        state: "present"
+        template: "{{ nginx_vhost_template }}"
+        extra_parameters: |
+          location / {
+              try_files $uri $uri/ /index.php$is_args$args;
+          }
+          location ~ \.php$ {
+              include snippets/fastcgi-php.conf;
+              fastcgi_pass unix:/dev/shm/php-fpm.sock;
+          }
+      - listen: "80"
+        server_name: "member-union-account-system.kpmember.cn"
+        root: "/srv/member-union-account-system/public"
+        access_log: "/var/log/nginx/member-union-account-system.kpmember.cn.access.log"
+        error_log: "/var/log/nginx/member-union-account-system.kpmember.cn.error.log"
+        index: "index index.html index.htm"
+        state: "present"
+        template: "{{ nginx_vhost_template }}"
+        extra_parameters: |
+          location / {
+              try_files $uri $uri/ /index.php$is_args$args;
+          }
+          location ~ \.php$ {
+              include snippets/fastcgi-php.conf;
+              fastcgi_pass unix:/dev/shm/php-fpm.sock;
+          }

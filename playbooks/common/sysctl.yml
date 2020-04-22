@@ -1,0 +1,10 @@
+---    
+- hosts: localhost
+  tasks:
+  - name: Optimize openfile limit
+    lineinfile:
+        path: "/etc/security/limits.conf"
+        line: "{{ item }}"
+    with_items:
+      - "* soft nofile 65535"
+      - "* hard nofile 65535"

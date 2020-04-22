@@ -1,0 +1,1214 @@
+- hosts: localhost
+  roles:
+    - nginx
+  vars:
+    nginx_remove_default_vhost: true
+    nginx_vhosts:
+      - listen: "80"
+        server_name: "mall-admin.dadi01.net"
+        root: "/srv/admin-shop-dadi01-com/dist"
+        access_log: "/data/logs/nginx/mall-admin.dadi01.net.access.log main"
+        error_log: "/data/logs/nginx/mall-admin.dadi01.net.error.log"
+        index: "index.html index.htm"
+        state: "present"
+        template: "{{ nginx_vhost_template }}"
+        extra_parameters: |
+          location / {
+              try_files $uri /index.html;
+              proxy_set_header   X-Forwarded-For $remote_addr;
+              proxy_set_header   Host $http_host;
+          }
+          location ^~ /api/crm/
+          {
+              proxy_pass http://ydapi.dadi01.net/;
+          }
+          location ^~ /api/erp/
+          {
+              proxy_pass http://serp.dadi01.net/;
+          }
+          location ^~ /api/finance/
+          {
+              proxy_pass http://finance-api.dadi01.net/;
+          }
+          location ^~ /api/admin/
+          {
+              proxy_pass http://authority-api.dadi01.net/admin/;
+          }
+          location ~ .*\.(gif|jpg|jpeg|png|bmp|swf)$
+          {
+              expires      30d;
+              access_log off; 
+          }
+          location ~ .*\.(js|css)?$
+          {
+              access_log off; 
+              expires      12h;
+          }
+
+      - listen: "80"
+        server_name: "hotel-admin.dadi01.net"
+        root: "/srv/hotel-admin-dadi01-com/dist"
+        access_log: "/data/logs/nginx/hotel-admin.dadi01.net.access.log main"
+        error_log: "/data/logs/nginx/hotel-admin.dadi01.net.error.log"
+        index: "index.html index.htm"
+        state: "present"
+        template: "{{ nginx_vhost_template }}"
+        extra_parameters: |
+          location / {
+              try_files $uri /index.html;
+              proxy_set_header   X-Forwarded-For $remote_addr;
+              proxy_set_header   Host $http_host;
+          }
+          location ^~ /api/4.0/admin/index/index/login
+          {
+              proxy_pass http://ucenter.dadi01.net/admin/login;
+          }
+          location ^~ /api/4.0/admin/index/index/loginbymobile
+          {
+              proxy_pass http://ucenter.dadi01.net/admin/loginbymobile;
+          }
+          location ^~ /api/4.0/admin/index/index/getcodebylogin
+          {
+              proxy_pass http://ucenter.dadi01.net/admin/getcodebylogin;
+          }
+          location ^~ /api/
+          {
+              proxy_pass http://hotel-api.dadi01.net/api/;
+          }
+          location ~ .*\.(gif|jpg|jpeg|png|bmp|swf)$
+          {
+              expires      30d;
+              access_log off; 
+          }
+          location ~ .*\.(js|css)?$
+          {
+              access_log off; 
+              expires      12h;
+          }
+      - listen: "80"
+        server_name: "ucenter-admin.dadi01.net"
+        root: "/srv/ucenter-frontend-dadi01-com/dist"
+        access_log: "/data/logs/nginx/ucenter-admin.dadi01.net.access.log main"
+        error_log: "/data/logs/nginx/ucenter-admin.dadi01.net.error.log"
+        index: "index.html index.htm"
+        state: "present"
+        template: "{{ nginx_vhost_template }}"
+        extra_parameters: |
+          location / {
+              try_files $uri /index.html;
+              proxy_set_header   X-Forwarded-For $remote_addr;
+              proxy_set_header   Host $http_host;
+          }
+          location ~ .*\.(gif|jpg|jpeg|png|bmp|swf)$
+          {
+              expires      30d;
+              access_log off; 
+          }
+          location ~ .*\.(js|css)?$
+          {
+              access_log off; 
+              expires      12h;
+          }
+      - listen: "80"
+        server_name: "admin-center.dadi01.net"
+        root: "/srv/admin-center-dadi01-com/dist"
+        access_log: "/data/logs/nginx/admin-center.dadi01.net.access.log main"
+        error_log: "/data/logs/nginx/admin-center.dadi01.net.error.log"
+        index: "index.html index.htm index.php"
+        state: "present"
+        template: "{{ nginx_vhost_template }}"
+        extra_parameters: |
+          location / {
+              try_files $uri /index.html;
+              proxy_set_header   X-Forwarded-For $remote_addr;
+              proxy_set_header   Host $http_host;
+          }
+          location ^~ /admin/
+          {
+              proxy_pass http://ucenter.dadi01.net/admin/;
+          }
+          location ~ .*\.(gif|jpg|jpeg|png|bmp|swf)$
+          {
+              expires      30d;
+              access_log off; 
+          }
+          location ~ .*\.(js|css)?$
+          {
+              access_log off; 
+              expires      12h;
+          }
+      - listen: "80"
+        server_name: "ucenter.dadi01.net"
+        root: "/srv/uc-dadi01-com/public"
+        access_log: "/data/logs/nginx/ucenter.dadi01.net.access.log main"
+        error_log: "/data/logs/nginx/ucenter.dadi01.net.error.log"
+        index: "index.html index.htm index.php"
+        state: "present"
+        template: "{{ nginx_vhost_template }}"
+        extra_parameters: |
+          if (!-e $request_filename) {
+            rewrite ^/index.php(.*)$ /index.php?s=$1 last;
+            rewrite ^(.*)$ /index.php?s=$1 last;
+            break;
+          }
+          location / {
+              try_files $uri $uri/ =404;
+          }
+          location ~ \.php$ {
+              include snippets/fastcgi-php.conf;
+              fastcgi_pass unix:/dev/shm/php-fpm.sock;
+          }   
+      - listen: "80"
+        server_name: "mall-store.dadi01.net"
+        root: "/srv/store-frontend-dadi01-com/dist"
+        access_log: "/data/logs/nginx/mall-store.dadi01.net.access.log main"
+        error_log: "/data/logs/nginx/mall-store.dadi01.net.error.log"
+        index: "index.html index.htm"
+        state: "present"
+        template: "{{ nginx_vhost_template }}"
+        extra_parameters: |
+          location / {
+              try_files $uri /index.html;
+              proxy_set_header   X-Forwarded-For $remote_addr;
+              proxy_set_header   Host $http_host;
+          }
+          location ^~ /api/
+          {
+              proxy_pass http://store-api.dadi01.net/;
+          }
+          location ~ .*\.(gif|jpg|jpeg|png|bmp|swf)$
+          {
+              expires      30d;
+              access_log off; 
+          }
+          location ~ .*\.(js|css)?$
+          {
+              access_log off; 
+              expires      12h;
+          }
+      - listen: "80"
+        server_name: "store-api.dadi01.net"
+        root: "/srv/store-dadi01-com/public"
+        access_log: "/data/logs/nginx/store-api.dadi01.net.access.log main"
+        error_log: "/data/logs/nginx/store-api.dadi01.net.error.log"
+        index: "index.html index.htm index.php"
+        state: "present"
+        template: "{{ nginx_vhost_template }}"
+        extra_parameters: |
+          if (!-e $request_filename) {
+            rewrite ^/index.php(.*)$ /index.php?s=$1 last;
+            rewrite ^(.*)$ /index.php?s=$1 last;
+            break;
+          }
+          location / {
+              try_files $uri $uri/ =404;
+          }
+          location ~ \.php$ {
+              include snippets/fastcgi-php.conf;
+              fastcgi_pass unix:/dev/shm/php-fpm.sock;
+          }
+      - listen: "80"
+        server_name: "mall-appapi.dadi01.net"
+      #  state: "present"
+      #  extra_parameters: |
+      #    location / {
+      #      return 301 https://mall-appapi.dadi01.net$request_uri;
+      #    }
+      #- listen: "443"
+      #  server_name: "ssl.mall-appapi.dadi01.net mall-appapi.dadi01.net"
+        root: "/srv/app-dadi01-com/public"
+        access_log: "/data/logs/nginx/mall-appapi.dadi01.net.access.log main"
+        error_log: "/data/logs/nginx/mall-appapi.dadi01.net.error.log"
+        index: "index.html index.htm index.php"
+        state: "present"
+        template: "{{ nginx_vhost_template }}"
+        extra_parameters: |
+          #ssl on;
+          #ssl_certificate cert/dadi01.net.pem;
+          #ssl_certificate_key cert/dadi01.net.key;
+          #ssl_session_timeout 5m;
+          #ssl_ciphers ECDHE-RSA-AES128-GCM-SHA256:ECDHE:ECDH:AES:HIGH:!NULL:!aNULL:!MD5:!ADH:!RC4;
+          #ssl_protocols TLSv1 TLSv1.1 TLSv1.2;
+          #ssl_prefer_server_ciphers on;
+
+          location / {
+              if (!-e $request_filename){
+                  rewrite ^/index.php(.*)$ /index.php?s=$1 last;
+                  rewrite ^(.*)$ /index.php?s=$1 last;
+                  break;
+              }
+          }
+          location ~ \.php$ {
+              include snippets/fastcgi-php.conf;
+              fastcgi_pass unix:/dev/shm/php-fpm.sock;
+          }
+      - listen: "80"
+        server_name: "rzl-wx.dadi01.net"
+        root: "/srv/weixin-dadi01-com/dist"
+        access_log: "/data/logs/nginx/rzl-wx.dadi01.net.access.log main"
+        error_log: "/data/logs/nginx/rzl-wx.dadi01.net.error.log"
+        index: "index.html index.htm"
+        state: "present"
+        template: "{{ nginx_vhost_template }}"
+        extra_parameters: |
+          location / {
+              try_files $uri /index.html;
+              proxy_set_header   X-Forwarded-For $remote_addr;
+              proxy_set_header   Host $http_host;
+          }
+          location ^~ /api/
+          {
+              proxy_pass http://mall-appapi.dadi01.net/;
+          }
+          location ^~ /wechat/wechat/
+          {
+              proxy_pass https://wxapi.dadi01.net/;
+          }
+          location ~ .*\.(gif|jpg|jpeg|png|bmp|swf)$
+          {
+              expires      30d;
+              access_log off; 
+          }
+          location ~ .*\.(js|css)?$
+          {
+              access_log off; 
+              expires      12h;
+          }
+      - listen: "80"
+        server_name: "zyl-wx.dadi01.net"
+        root: "/srv/ziyouli-wechat/dist"
+        access_log: "/data/logs/nginx/zyl-wx.dadi01.net.access.log main"
+        error_log: "/data/logs/nginx/zyl-wx.dadi01.net.error.log"
+        index: "index.html index.htm"
+        state: "present"
+        template: "{{ nginx_vhost_template }}"
+        extra_parameters: |
+          location / {
+              try_files $uri /index.html;
+              proxy_set_header   X-Forwarded-For $remote_addr;
+              proxy_set_header   Host $http_host;
+          }
+          location ^~ /api/
+          {
+              proxy_pass http://mall-appapi.dadi01.net/;
+          }
+          location ^~ /wechat/wechat/
+          {
+              proxy_pass https://wxapi.dadi01.net/;
+          }
+          location ~ .*\.(gif|jpg|jpeg|png|bmp|swf)$
+          {
+              expires      30d;
+              access_log off; 
+          }
+          location ~ .*\.(js|css)?$
+          {
+              access_log off; 
+              expires      12h;
+          }
+      - listen: "80"
+        server_name: "ddtest-wx.dadi01.net"
+        root: "/srv/ddtest-wechat/dist"
+        access_log: "/data/logs/nginx/ddtest-wx.dadi01.net.access.log main"
+        error_log: "/data/logs/nginx/ddtest-wx.dadi01.net.error.log"
+        index: "index.html index.htm"
+        state: "present"
+        template: "{{ nginx_vhost_template }}"
+        extra_parameters: |
+          location / {
+              try_files $uri /index.html;
+              proxy_set_header   X-Forwarded-For $remote_addr;
+              proxy_set_header   Host $http_host;
+          }
+          location ^~ /api/
+          {
+              proxy_pass http://mall-appapi.dadi01.net/;
+          }
+          location ^~ /wechat/wechat/
+          {
+              proxy_pass https://wxapi.dadi01.net/;
+          }
+          location ~ .*\.(gif|jpg|jpeg|png|bmp|swf)$
+          {
+              expires      30d;
+              access_log off; 
+          }
+          location ~ .*\.(js|css)?$
+          {
+              access_log off; 
+              expires      12h;
+          }
+      - listen: "80"
+        server_name: "wechat.dadi01.net"
+        state: "present"
+        extra_parameters: |
+          location / {
+            return 301 https://wechat.dadi01.net$request_uri;
+          }
+      - listen: "443"
+        server_name: "ssl.wechat.dadi01.net wechat.dadi01.net"
+        root: "/srv/wechat-dadi01-com/public"
+        access_log: "/data/logs/nginx/wechat.dadi01.net.access.log main"
+        error_log: "/data/logs/nginx/wechat.dadi01.net.error.log"
+        index: "index.html index.htm index.php"
+        state: "present"
+        template: "{{ nginx_vhost_template }}"
+        extra_parameters: |
+          ssl on;
+          ssl_certificate cert/dadi01.net.pem;
+          ssl_certificate_key cert/dadi01.net.key;
+          ssl_session_timeout 5m;
+          ssl_ciphers ECDHE-RSA-AES128-GCM-SHA256:ECDHE:ECDH:AES:HIGH:!NULL:!aNULL:!MD5:!ADH:!RC4;
+          ssl_protocols TLSv1 TLSv1.1 TLSv1.2;
+          ssl_prefer_server_ciphers on;
+
+          if (!-e $request_filename) {
+            rewrite ^/index.php(.*)$ /index.php?s=$1 last;
+            rewrite ^(.*)$ /index.php?s=$1 last;
+            break;
+          }
+          location / {
+              try_files $uri $uri/ =404;
+          }
+          location ~ \.php$ {
+              include snippets/fastcgi-php.conf;
+              fastcgi_pass unix:/dev/shm/php-fpm.sock;
+          }
+      - listen: "80"
+        server_name: "wxapi.dadi01.net"
+        state: "present"
+        extra_parameters: |
+          location / {
+            return 301 https://wxapi.dadi01.net$request_uri;
+          }
+      - listen: "443"
+        server_name: "ssl.wxapi.dadi01.net wxapi.dadi01.net"
+        root: "/srv/rizili-dadi01-com/public"
+        access_log: "/data/logs/nginx/wxapi.dadi01.net.access.log main"
+        error_log: "/data/logs/nginx/wxapi.dadi01.net.error.log"
+        index: "index.html index.htm index.php"
+        state: "present"
+        template: "{{ nginx_vhost_template }}"
+        extra_parameters: |
+          ssl on;
+          ssl_certificate cert/dadi01.net.pem;
+          ssl_certificate_key cert/dadi01.net.key;
+          ssl_session_timeout 5m;
+          ssl_ciphers ECDHE-RSA-AES128-GCM-SHA256:ECDHE:ECDH:AES:HIGH:!NULL:!aNULL:!MD5:!ADH:!RC4;
+          ssl_protocols TLSv1 TLSv1.1 TLSv1.2;
+          ssl_prefer_server_ciphers on;
+        
+          if (!-e $request_filename) {
+            rewrite ^/index.php(.*)$ /index.php?s=$1 last;
+            rewrite ^(.*)$ /index.php?s=$1 last;
+            break;
+          }
+          location / {
+              try_files $uri $uri/ =404;
+          }
+          location ~ \.php$ {
+              include snippets/fastcgi-php.conf;
+              fastcgi_pass unix:/dev/shm/php-fpm.sock;
+          }   
+      - listen: "80"
+        server_name: "per.dadi01.net"
+        root: "/srv/permission-dadi01-net/dist"
+        access_log: "/data/logs/nginx/per.dadi01.net.access.log main"
+        error_log: "/data/logs/nginx/per.dadi01.net.error.log"
+        index: "index.html index.htm"
+        state: "present"
+        template: "{{ nginx_vhost_template }}"
+        extra_parameters: |
+          location / {
+              try_files $uri /index.html;
+              proxy_set_header   X-Forwarded-For $remote_addr;
+              proxy_set_header   Host $http_host;
+          }
+          location ^~ /api/
+          {
+              proxy_pass http://per-api.dadi01.net/;
+          }
+      
+          location ^~ /api/1.0/
+          {
+              proxy_pass http://per-api.dadi01.net/api/1.0/;
+          }
+          location ~ .*\.(gif|jpg|jpeg|png|bmp|swf)$
+          {
+              expires      30d;
+              access_log off; 
+          }
+          location ~ .*\.(js|css)?$
+          {
+              access_log off; 
+              expires      12h;
+          }
+      - listen: "80"
+        server_name: "per-api.dadi01.net"
+        root: "/srv/per-dadi01-net/public"
+        access_log: "/data/logs/nginx/per-api.dadi01.net.access.log main"
+        error_log: "/data/logs/nginx/per-api.dadi01.net.error.log"
+        index: "index index.html index.htm"
+        state: "present"
+        template: "{{ nginx_vhost_template }}"
+        extra_parameters: |
+          if (!-e $request_filename) {
+            rewrite ^/index.php(.*)$ /index.php?s=$1 last;
+            rewrite ^(.*)$ /index.php?s=$1 last;
+            break;
+          }
+          location / {
+              try_files $uri $uri/ =404;
+          }
+          location ~ \.php$ {
+              include snippets/fastcgi-php.conf;
+              fastcgi_pass unix:/dev/shm/php-fpm.sock;
+          }
+      - listen: "80"
+        server_name: "authority.dadi01.net"
+        root: "/srv/authority-frontend-dadi01-com/dist"
+        access_log: "/data/logs/nginx/authority.dadi01.net.access.log main"
+        error_log: "/data/logs/nginx/authority.dadi01.net.error.log"
+        index: "index.html index.htm"
+        state: "present"
+        template: "{{ nginx_vhost_template }}"
+        extra_parameters: |
+          location / {
+              try_files $uri /index.html;
+              proxy_set_header   X-Forwarded-For $remote_addr;
+              proxy_set_header   Host $http_host;
+          }
+          location ^~ /api/
+          {
+              proxy_pass http://authority-api.dadi01.net/;
+          }
+          location ~ .*\.(gif|jpg|jpeg|png|bmp|swf)$
+          {
+              expires      30d;
+              access_log off; 
+          }
+          location ~ .*\.(js|css)?$
+          {
+              access_log off; 
+              expires      12h;
+          }    
+      - listen: "80"
+        server_name: "authority-api.dadi01.net"
+        root: "/srv/authority-dadi01-com/public"
+        access_log: "/data/logs/nginx/authority-api.dadi01.net.access.log main"
+        error_log: "/data/logs/nginx/authority-api.dadi01.net.error.log"
+        index: "index.html index.htm index.php"
+        state: "present"
+        template: "{{ nginx_vhost_template }}"
+        extra_parameters: |
+          if (!-e $request_filename) {
+            rewrite ^/index.php(.*)$ /index.php?s=$1 last;
+            rewrite ^(.*)$ /index.php?s=$1 last;
+            break;
+          }
+          location / {
+              try_files $uri $uri/ =404;
+          }
+          location ~ \.php$ {
+              include snippets/fastcgi-php.conf;
+              fastcgi_pass unix:/dev/shm/php-fpm.sock;
+          }
+      - listen: "80"
+        server_name: "payment.dadi01.net"
+        root: "/srv/payment-frontend-dadi01-com/dist"
+        access_log: "/data/logs/nginx/payment.dadi01.net.access.log main"
+        error_log: "/data/logs/nginx/payment.dadi01.net.error.log"
+        index: "index.html index.htm"
+        state: "present"
+        template: "{{ nginx_vhost_template }}"
+        extra_parameters: |
+          location / {
+              try_files $uri /index.html;
+              proxy_set_header   X-Forwarded-For $remote_addr;
+              proxy_set_header   Host $http_host;
+          }
+          location ^~ /api/
+          {
+              proxy_pass https://paycenter.dadi01.net/;
+          }
+          location ~ .*\.(gif|jpg|jpeg|png|bmp|swf)$
+          {
+              expires      30d;
+              access_log off; 
+          }
+          location ~ .*\.(js|css)?$
+          {
+              access_log off; 
+              expires      12h;
+          }
+      - listen: "80"
+        server_name: "paycenter.dadi01.net"
+        state: "present"
+        extra_parameters: |
+          location / {
+            return 301 https://paycenter.dadi01.net$request_uri;
+          }
+      - listen: "443"
+        server_name: "ssl.paycenter.dadi01.net paycenter.dadi01.net"
+        root: "/srv/paycenter-dadi01-com/public"
+        access_log: "/data/logs/nginx/paycenter.dadi01.net.access.log main"
+        error_log: "/data/logs/nginx/paycenter.dadi01.net.error.log"
+        index: "index.html index.htm index.php"
+        state: "present"
+        template: "{{ nginx_vhost_template }}"
+        extra_parameters: |
+          ssl on;
+          ssl_certificate cert/dadi01.net.pem;
+          ssl_certificate_key cert/dadi01.net.key;
+          ssl_session_timeout 5m;
+          ssl_ciphers ECDHE-RSA-AES128-GCM-SHA256:ECDHE:ECDH:AES:HIGH:!NULL:!aNULL:!MD5:!ADH:!RC4;
+          ssl_protocols TLSv1 TLSv1.1 TLSv1.2;
+          ssl_prefer_server_ciphers on;
+
+          if (!-e $request_filename) {
+            rewrite ^/index.php(.*)$ /index.php?s=$1 last;
+            rewrite ^(.*)$ /index.php?s=$1 last;
+            break;
+          }
+          location / {
+              try_files $uri $uri/ =404;
+              if ($http_origin ~* "^https?://(.+\.)?(dadi01|fncul)\.(com|net|cn)$") {
+                  add_header  Access-Control-Allow-Origin $http_origin;
+                  add_header  Access-Control-Allow-Credentials true;
+                  add_header  Access-Control-Allow-Methods GET,POST,OPTIONS;
+                  add_header  Access-Control-Expose-Headers Content-Length,Content-Range;
+              }
+          }
+          location ~ \.php$ {
+              include snippets/fastcgi-php.conf;
+              fastcgi_pass unix:/dev/shm/php-fpm.sock;
+          }
+      - listen: "80"
+        server_name: "msg-admin.dadi01.net"
+        root: "/srv/msg-admin-dadi01-com/dist"
+        access_log: "/data/logs/nginx/msg-admin.dadi01.net.access.log main"
+        error_log: "/data/logs/nginx/msg-admin.dadi01.net.error.log"
+        index: "index.html index.htm"
+        state: "present"
+        template: "{{ nginx_vhost_template }}"
+        extra_parameters: |
+          location / {
+              try_files $uri /index.html;
+              proxy_set_header   X-Forwarded-For $remote_addr;
+              proxy_set_header   Host $http_host;
+          }
+          location ^~ /api/
+          {
+              proxy_pass http://msg-api.dadi01.net/;
+          }
+          location ^~ /api/msg/superadmin/
+          {
+              proxy_pass http://msg-api.dadi01.net/sms/superadmin/;
+          }
+          location ^~ /api/msg/push/
+          {
+              proxy_pass http://msg-api.dadi01.net/push/;
+          }
+          location ~ .*\.(gif|jpg|jpeg|png|bmp|swf)$
+          {
+              expires      30d;
+              access_log off; 
+          }
+          location ~ .*\.(js|css)?$
+          {
+              access_log off; 
+              expires      12h;
+          }      
+      - listen: "80"
+        server_name: "msg.v.dadi01.net"
+        root: "/srv/msg-frontend-dadi01-com/dist"
+        access_log: "/data/logs/nginx/msg.v.dadi01.net.access.log main"
+        error_log: "/data/logs/nginx/msg.v.dadi01.net.error.log"
+        index: "index.html index.htm"
+        state: "present"
+        template: "{{ nginx_vhost_template }}"
+        extra_parameters: |
+          location / {
+              try_files $uri /index.html;
+              proxy_set_header   X-Forwarded-For $remote_addr;
+              proxy_set_header   Host $http_host;
+          }
+          location ^~ /api/sms/
+          {
+              proxy_pass http://msg-api.dadi01.net/sms/;
+          }
+          location ^~ /api/msg/
+          {
+              proxy_pass http://msg-api.dadi01.net/sms/;
+          }
+          location ~ .*\.(gif|jpg|jpeg|png|bmp|swf)$
+          {
+              expires      30d;
+              access_log off; 
+          }
+          location ~ .*\.(js|css)?$
+          {
+              access_log off; 
+              expires      12h;
+          }
+      - listen: "80"
+        server_name: "msg-api.dadi01.net"
+        root: "/srv/msg-dadi01-com/public"
+        access_log: "/data/logs/nginx/msg-api.dadi01.net.access.log main"
+        error_log: "/data/logs/nginx/msg-api.dadi01.net.error.log"
+        index: "index.html index.htm index.php"
+        state: "present"
+        template: "{{ nginx_vhost_template }}"
+        extra_parameters: |
+          if (!-e $request_filename) {
+            rewrite ^/index.php(.*)$ /index.php?s=$1 last;
+            rewrite ^(.*)$ /index.php?s=$1 last;
+            break;
+          }
+          location / {
+              try_files $uri $uri/ =404;
+          }
+          location ~ \.php$ {
+              include snippets/fastcgi-php.conf;
+              fastcgi_pass unix:/dev/shm/php-fpm.sock;
+          }
+      - listen: "80"
+        server_name: "hotel-clean.dadi01.net"
+        root: "/srv/hotel-clean-dadi01-com/public"
+        access_log: "/data/logs/nginx/hotel-clean.dadi01.net.access.log main"
+        error_log: "/data/logs/nginx/hotel-clean.dadi01.net.error.log"
+        index: "index.html index.htm index.php"
+        state: "present"
+        template: "{{ nginx_vhost_template }}"
+        extra_parameters: |
+          if (!-e $request_filename) {
+            rewrite ^/index.php(.*)$ /index.php?s=$1 last;
+            rewrite ^(.*)$ /index.php?s=$1 last;
+            break;
+          }
+          location / {
+              try_files $uri $uri/ =404;
+          }
+          location ~ \.php$ {
+              include snippets/fastcgi-php.conf;
+              fastcgi_pass unix:/dev/shm/php-fpm.sock;
+          }
+      - listen: "80"
+        server_name: "hotel-api.dadi01.net"
+        root: "/srv/hotel-dadi01-com/public"
+        access_log: "/data/logs/nginx/hotel-api.dadi01.net.access.log main"
+        error_log: "/data/logs/nginx/hotel-api.dadi01.net.error.log"
+        index: "index.html index.htm index.php"
+        state: "present"
+        template: "{{ nginx_vhost_template }}"
+        extra_parameters: |
+          if (!-e $request_filename) {
+            rewrite ^/index.php(.*)$ /index.php?s=$1 last;
+            rewrite ^(.*)$ /index.php?s=$1 last;
+            break;
+          }
+          location / {
+              try_files $uri $uri/ =404;
+          }
+          location ~ \.php$ {
+              include snippets/fastcgi-php.conf;
+              fastcgi_pass unix:/dev/shm/php-fpm.sock;
+          }
+      - listen: "443"
+        server_name: "ssl.hotel-api.dadi01.net hotel-api.dadi01.net"
+        root: "/srv/hotel-dadi01-com/public"
+        access_log: "/data/logs/nginx/hotel-api.dadi01.net.access.log main"
+        error_log: "/data/logs/nginx/hotel-api.dadi01.net.error.log"
+        index: "index.html index.htm index.php"
+        state: "present"
+        template: "{{ nginx_vhost_template }}"
+        extra_parameters: |
+          ssl on;
+          ssl_certificate cert/dadi01.net.pem;
+          ssl_certificate_key cert/dadi01.net.key;
+          ssl_session_timeout 5m;
+          ssl_ciphers ECDHE-RSA-AES128-GCM-SHA256:ECDHE:ECDH:AES:HIGH:!NULL:!aNULL:!MD5:!ADH:!RC4;
+          ssl_protocols TLSv1 TLSv1.1 TLSv1.2;
+          ssl_prefer_server_ciphers on;
+
+          if (!-e $request_filename) {
+            rewrite ^/index.php(.*)$ /index.php?s=$1 last;
+            rewrite ^(.*)$ /index.php?s=$1 last;
+            break;
+          }
+          location / {
+              try_files $uri $uri/ =404;
+          }
+          location ~ \.php$ {
+              include snippets/fastcgi-php.conf;
+              fastcgi_pass unix:/dev/shm/php-fpm.sock;
+          }
+      - listen: "80"
+        server_name: "hotel-saas.dadi01.net"
+        root: "/srv/hotel-saas/public"
+        access_log: "/data/logs/nginx/hotel-saas.dadi01.net.access.log main"
+        error_log: "/data/logs/nginx/hotel-saas.dadi01.net.error.log"
+        index: "index.html index.htm index.php"
+        state: "present"
+        template: "{{ nginx_vhost_template }}"
+        extra_parameters: |
+          if (!-e $request_filename) {
+            rewrite ^/index.php(.*)$ /index.php?s=$1 last;
+            rewrite ^(.*)$ /index.php?s=$1 last;
+            break;
+          }
+          location / {
+              try_files $uri $uri/ =404;
+          }
+          location ~ \.php$ {
+              include snippets/fastcgi-php.conf;
+              fastcgi_pass unix:/dev/shm/php-fpm.sock;
+          }
+      - listen: "80"
+        server_name: "parking.dadi01.net"
+        root: "/srv/parking-dadi01-com/public"
+        access_log: "/data/logs/nginx/parking.dadi01.net.access.log main"
+        error_log: "/data/logs/nginx/parking.dadi01.net.error.log"
+        index: "index.html index.htm index.php"
+        state: "present"
+        template: "{{ nginx_vhost_template }}"
+        extra_parameters: |
+          location / {
+              if (!-e $request_filename){
+                  rewrite ^/index.php(.*)$ /index.php?s=$1 last;
+                  rewrite ^(.*)$ /index.php?s=$1 last;
+                  break;
+              }
+          }
+          location ~ \.php$ {
+              include snippets/fastcgi-php.conf;
+              fastcgi_pass unix:/dev/shm/php-fpm.sock;
+          }
+      - listen: "80"
+        server_name: "serp.dadi01.net"
+        root: "/srv/yderp-dadi01-com/public"
+        access_log: "/data/logs/nginx/serp.dadi01.net.access.log main"
+        error_log: "/data/logs/nginx/serp.dadi01.net.error.log"
+        index: "index.html index.htm index.php"
+        state: "present"
+        template: "{{ nginx_vhost_template }}"
+        extra_parameters: |
+          location / {
+              if (!-e $request_filename){
+                  rewrite ^/index.php(.*)$ /index.php?s=$1 last;
+                  rewrite ^(.*)$ /index.php?s=$1 last;
+                  break;
+              }
+          }
+          location ~ \.php$ {
+              include snippets/fastcgi-php.conf;
+              fastcgi_pass unix:/dev/shm/php-fpm.sock;
+          }
+      - listen: "80"
+        server_name: "ydapi.dadi01.net"
+        root: "/srv/ydapi-dadi01-com/public"
+        access_log: "/data/logs/nginx/ydapi.dadi01.net.access.log main"
+        error_log: "/data/logs/nginx/ydapi.dadi01.net.error.log"
+        index: "index.html index.htm index.php"
+        state: "present"
+        template: "{{ nginx_vhost_template }}"
+        extra_parameters: |
+          location / {
+              if (!-e $request_filename){
+                  rewrite ^/index.php(.*)$ /index.php?s=$1 last;
+                  rewrite ^(.*)$ /index.php?s=$1 last;
+                  break;
+              }
+          }
+          location ~ \.php$ {
+              include snippets/fastcgi-php.conf;
+              fastcgi_pass unix:/dev/shm/php-fpm.sock;
+          }    
+      - listen: "80"
+        server_name: "finance-api.dadi01.net"
+        root: "/srv/finance-dadi01-com/public"
+        access_log: "/data/logs/nginx/finance-api.dadi01.net.access.log main"
+        error_log: "/data/logs/nginx/finance-api.dadi01.net.error.log"
+        index: "index.html index.htm index.php"
+        state: "present"
+        template: "{{ nginx_vhost_template }}"
+        extra_parameters: |
+          location / {
+              if (!-e $request_filename){
+                  rewrite ^/index.php(.*)$ /index.php?s=$1 last;
+                  rewrite ^(.*)$ /index.php?s=$1 last;
+                  break;
+              }
+          }
+          location ~ \.php$ {
+              include snippets/fastcgi-php.conf;
+              fastcgi_pass unix:/dev/shm/php-fpm.sock;
+          }
+      - listen: "80"
+        server_name: "wifi.dadi01.net"
+        state: "present"
+        extra_parameters: |
+          location / {
+            return 301 https://wifi.dadi01.net$request_uri;
+          }
+      - listen: "443"
+        server_name: "ssl.wifi.dadi01.net wifi.dadi01.net"
+        root: "/srv/web-wifi-auth/dist"
+        access_log: "/data/logs/nginx/wifi.dadi01.net.access.log main"
+        error_log: "/data/logs/nginx/wifi.dadi01.net.error.log"
+        index: "index.html index.htm"
+        state: "present"
+        template: "{{ nginx_vhost_template }}"
+        extra_parameters: |
+          ssl on;
+          ssl_certificate cert/dadi01.net.pem;
+          ssl_certificate_key cert/dadi01.net.key;
+          ssl_session_timeout 5m;
+          ssl_ciphers ECDHE-RSA-AES128-GCM-SHA256:ECDHE:ECDH:AES:HIGH:!NULL:!aNULL:!MD5:!ADH:!RC4;
+          ssl_protocols TLSv1 TLSv1.1 TLSv1.2;
+          ssl_prefer_server_ciphers on;
+          
+          location / {
+              try_files $uri /index.html;
+              proxy_set_header   X-Forwarded-For $remote_addr;
+              proxy_set_header   Host $http_host;
+          }
+          location ^~ /api/
+          {
+              proxy_pass http://wifi-api.dadi01.net/;
+          }
+          location ~ .*\.(gif|jpg|jpeg|png|bmp|swf)$
+          {
+              expires      30d;
+              access_log off; 
+          }
+          location ~ .*\.(js|css)?$
+          {
+              access_log off; 
+              expires      12h;
+          }
+      - listen: "80"
+        server_name: "wifi-api.dadi01.net"
+        root: "/srv/wifi-api-dadi01-com/public"
+        access_log: "/data/logs/nginx/wifi-api.dadi01.net.access.log main"
+        error_log: "/data/logs/nginx/wifi-api.dadi01.net.error.log"
+        index: "index.html index.htm index.php"
+        state: "present"
+        template: "{{ nginx_vhost_template }}"
+        extra_parameters: |
+          location / {
+              if (!-e $request_filename){
+                  rewrite ^/index.php(.*)$ /index.php?s=$1 last;
+                  rewrite ^(.*)$ /index.php?s=$1 last;
+                  break;
+              }
+          }
+          location ~ \.php$ {
+              include snippets/fastcgi-php.conf;
+              fastcgi_pass unix:/dev/shm/php-fpm.sock;
+          }
+      - listen: "80"
+        server_name: "saas-api-platform.dadi01.net"
+        root: "/srv/saas-api-platform-dadi01-com/public"
+        access_log: "/data/logs/nginx/saas-api-platform.dadi01.net.access.log main"
+        error_log: "/data/logs/nginx/saas-api-platform.dadi01.net.error.log"
+        index: "index.html index.htm index.php"
+        state: "present"
+        template: "{{ nginx_vhost_template }}"
+        extra_parameters: |
+          location / {
+              if (!-e $request_filename){
+                  rewrite ^/index.php(.*)$ /index.php?s=$1 last;
+                  rewrite ^(.*)$ /index.php?s=$1 last;
+                  break;
+              }
+          }
+          location ~ \.php$ {
+              include snippets/fastcgi-php.conf;
+              fastcgi_pass unix:/dev/shm/php-fpm.sock;
+          }
+      - listen: "80"
+        server_name: "saas-api-group.dadi01.net"
+        root: "/srv/saas-api-group-dadi01-com/public"
+        access_log: "/data/logs/nginx/saas-api-group.dadi01.net.access.log main"
+        error_log: "/data/logs/nginx/saas-api-group.dadi01.net.error.log"
+        index: "index.html index.htm index.php"
+        state: "present"
+        template: "{{ nginx_vhost_template }}"
+        extra_parameters: |
+          location / {
+              if (!-e $request_filename){
+                  rewrite ^/index.php(.*)$ /index.php?s=$1 last;
+                  rewrite ^(.*)$ /index.php?s=$1 last;
+                  break;
+              }
+          }
+          location ~ \.php$ {
+              include snippets/fastcgi-php.conf;
+              fastcgi_pass unix:/dev/shm/php-fpm.sock;
+          }
+      - listen: "80"
+        server_name: "mp-api.dadi01.net"
+        root: "/srv/member-partner-dadi01-com/public"
+        access_log: "/data/logs/nginx/mp-api.dadi01.net.access.log main"
+        error_log: "/data/logs/nginx/mp-api.dadi01.net.error.log"
+        index: "index.html index.htm index.php"
+        state: "present"
+        template: "{{ nginx_vhost_template }}"
+        extra_parameters: |
+          location / {
+              if (!-e $request_filename){
+                  rewrite ^/index.php(.*)$ /index.php?s=$1 last;
+                  rewrite ^(.*)$ /index.php?s=$1 last;
+                  break;
+              }
+          }
+          location ~ \.php$ {
+              include snippets/fastcgi-php.conf;
+              fastcgi_pass unix:/dev/shm/php-fpm.sock;
+          }        
+      - listen: "80"
+        server_name: "ws.dadi01.net"
+        root: "/srv/swoole-websocket-server/public"
+        access_log: "/data/logs/nginx/ws.dadi01.net.access.log main"
+        error_log: "/data/logs/nginx/ws.dadi01.net.error.log"
+        index: "index.html index.htm index.php"
+        state: "present"
+        template: "{{ nginx_vhost_template }}"
+        extra_parameters: |
+          location / {
+              proxy_pass   http://127.0.0.1:9501;
+          }
+      - listen: "80"
+        server_name: "mid.dadi01.net"
+        root: "/srv/hardware-middleware"
+        access_log: "/data/logs/nginx/mid.dadi01.net.access.log main"
+        error_log: "/data/logs/nginx/mid.dadi01.net.error.log"
+        index: "index.html index.htm index.php"
+        state: "present"
+        template: "{{ nginx_vhost_template }}"
+        extra_parameters: |
+          location / {
+              proxy_pass   http://127.0.0.1:11111;
+          }
+      - listen: "80"
+        server_name: "gw.dadi01.net"
+        root: "/srv/newretail-api-gateway"
+        access_log: "/data/logs/nginx/gw.dadi01.net.access.log main"
+        error_log: "/data/logs/nginx/gw.dadi01.net.error.log"
+        index: "index.html index.htm index.php"
+        state: "present"
+        template: "{{ nginx_vhost_template }}"
+        extra_parameters: |
+          location / {
+              proxy_pass   http://127.0.0.1:8000;
+          }
+      - listen: "80"
+        server_name: "coupon-api.dadi01.net"
+        root: "/srv/coupon-dadi01-com"
+        access_log: "/data/logs/nginx/coupon-api.dadi01.net.access.log main"
+        error_log: "/data/logs/nginx/coupon-api.dadi01.net.error.log"
+        index: "index.html index.htm index.php"
+        state: "present"
+        template: "{{ nginx_vhost_template }}"
+        extra_parameters: |
+          location / {
+              proxy_pass   http://127.0.0.1:9527;
+          }
+  tags: nginx
+
+
+- hosts: localhost
+  roles:
+    - php
+    - php-swoole
+    - php-xhprof
+  vars:
+    php_version: '7.2'
+  tags: php
+
+- hosts: localhost
+  roles:
+    - kong
+  tags: kong
+
+
+- hosts: localhost
+  roles:
+    - supervisor
+  vars:
+    supervisor_inet_http_server_enable: true
+    supervisor_user: root
+    supervisor_password: 'dd01newsuper'
+    supervisor_programs:
+      - name: 'hotel_horizon'
+        command: php /srv/hotel-dadi01-com/artisan horizon
+        configuration: |
+          process_name=%(program_name)s_%(process_num)s
+          numprocs=2
+          autostart = true
+          autorestart = true
+          stopasgroup=true
+          killasgroup=true
+          startsecs = 10
+          startretries = 3
+          user = www-data
+          stdout_logfile=/var/log/supervisor/hotel_horizon.log
+      - name: 'hotel_saas'
+        command: php /srv/hotel-saas/artisan horizon
+        configuration: |
+          process_name=%(program_name)s_%(process_num)s
+          numprocs=2
+          autostart = true
+          autorestart = true
+          stopasgroup=true
+          killasgroup=true
+          startsecs = 10
+          startretries = 3
+          user = www-data
+          stdout_logfile=/var/log/supervisor/hotel_saas.log
+      - name: 'msg-mobile'
+        command: php /srv/msg-dadi01-com/artisan queue:work --queue=push_aliyun --tries=8
+        configuration: |
+          process_name=%(program_name)s_%(process_num)s
+          numprocs=2
+          autostart = true
+          autorestart = true
+          stopasgroup=true
+          killasgroup=true
+          startsecs = 10
+          startretries = 3
+          user = www-data
+          stdout_logfile=/var/log/supervisor/msg-mobile.log
+      - name: 'scan-image'
+        command: php /srv/msg-dadi01-com/artisan queue:work --queue=scan_image_check --tries=8
+        configuration: |
+          process_name=%(program_name)s_%(process_num)s
+          numprocs=2
+          autostart = true
+          autorestart = true
+          stopasgroup=true
+          killasgroup=true
+          startsecs = 10
+          startretries = 3
+          user = www-data
+          stdout_logfile=/var/log/supervisor/scan-image.log
+      - name: 'scan-video'
+        command: php /srv/msg-dadi01-com/artisan queue:work --queue=scan_video_check --tries=8
+        configuration: |
+          process_name=%(program_name)s_%(process_num)s
+          numprocs=2
+          autostart = true
+          autorestart = true
+          stopasgroup=true
+          killasgroup=true
+          startsecs = 10
+          startretries = 3
+          user = www-data
+          stdout_logfile=/var/log/supervisor/scan-video.log
+      - name: 'app-im'
+        command: php /srv/app-dadi01-com/think queue:work --daemon --queue ImDeal
+        configuration: |
+          autostart = true
+          autorestart = true
+          startsecs = 10
+          startretries = 3
+          user = www-data
+          stdout_logfile=/var/log/supervisor/app-im.log
+      - name: 'app-post-check'
+        command: php /srv/app-dadi01-com/think queue:work --daemon --queue PostAudit
+        configuration: |
+          autostart = true
+          autorestart = true
+          startsecs = 10
+          startretries = 3
+          user = www-data
+          stdout_logfile=/var/log/supervisor/app-post-check.log
+      - name: 'parking-openbrake'
+        command: php /srv/parking-dadi01-com/think queue:work --daemon --queue OpenBrake
+        configuration: |
+          autostart = true
+          autorestart = true
+          startsecs = 10
+          startretries = 3
+          user = www-data
+          stdout_logfile=/var/log/supervisor/parking-openbrake.log
+      - name: 'VoucherJob'
+        command: php /srv/finance-dadi01-com/think queue:work --daemon --queue VoucherJob
+        configuration: |
+          autostart = true
+          autorestart = true
+          startsecs = 10
+          startretries = 3
+          user = www-data
+          stdout_logfile=/var/log/supervisor/VoucherJob.log
+      - name: 'msg-query'
+        command: /srv/msg-query/bin/consume SmsInternal Run
+        configuration: |
+          directory=/srv/msg-query/bin/
+          autostart = true
+          autorestart = true
+          startsecs = 10
+          startretries = 3
+          user = www-data
+          stdout_logfile=/var/log/supervisor/msg-query.log
+      - name: 'CrmQueue'
+        command: php /srv/app-dadi01-com/think queue:work --daemon --queue CrmQueue
+        configuration: |
+          autostart = true
+          autorestart = true
+          startsecs = 10
+          startretries = 3
+          user = www-data
+          stdout_logfile=/var/log/supervisor/CrmQueue.log
+      - name: 'hard2midware'
+        command: /srv/hardware-middleware/hard2midware/hard2midware
+        configuration: |
+          directory=/srv/hardware-middleware/
+          autostart = true
+          autorestart = true
+          startsecs = 10
+          startretries = 3
+          user = www-data
+          stdout_logfile=/var/log/supervisor/hard2midware.log
+      - name: 'websocket'
+        command: php /srv/swoole-websocket-server/server start
+        configuration: |
+          directory=/srv/swoole-websocket-server/
+          autostart = true
+          autorestart = true
+          startsecs = 10
+          startretries = 3
+          user = www-data
+          stdout_logfile=/var/log/supervisor/websocket.log
+      - name: 'dd01_member_consumers'
+        command: /usr/local/openresty/bin/resty /usr/local/share/lua/5.1/kong/plugins/authentication/rabbitmq-cli/dd01_member_consumers.lua
+        configuration: |
+          directory=/usr/local/share/lua/5.1/kong/plugins/authentication/rabbitmq-cli/
+          autostart = true
+          autorestart = true
+          startsecs = 10
+          startretries = 3
+          user = www-data
+          stdout_logfile=/var/log/supervisor/dd01_member_consumers.log
+      - name: 'coupon-api'
+        command: /srv/coupon-dadi01-com/release/coupon
+        configuration: |
+          directory=/srv/coupon-dadi01-com
+          autostart = true
+          autorestart = true
+          startsecs = 10
+          startretries = 3
+          user = www-data
+          stdout_logfile=/var/log/supervisor/coupon-api.log
+      - name: 'erp_FixBillCompute'
+        command: php /srv/yderp-dadi01-com/think mq/FixBillCompute
+        configuration: |
+          directory=/srv/yderp-dadi01-com
+          autostart = true
+          autorestart = true
+          startsecs = 10
+          startretries = 3
+          user = www-data
+          stdout_logfile=/var/log/supervisor/erp_FixBillCompute.log
+  tags: supervisor

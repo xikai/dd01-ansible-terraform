@@ -1,0 +1,86 @@
+- hosts: localhost
+  roles:
+    - nginx
+  vars:
+    nginx_remove_default_vhost: true
+    nginx_vhosts:
+      - listen: "80"
+        server_name: "serp.fncul.com"
+        root: "/srv/yderp-dadi01-com/public"
+        access_log: "/data/logs/nginx/serp.fncul.com.access.log main"
+        error_log: "/data/logs/nginx/serp.fncul.com.error.log"
+        index: "index.html index.htm index.php"
+        state: "present"
+        template: "{{ nginx_vhost_template }}"
+        extra_parameters: |
+          location / {
+              if (!-e $request_filename){
+                  rewrite ^/index.php(.*)$ /index.php?s=$1 last;
+                  rewrite ^(.*)$ /index.php?s=$1 last;
+                  break;
+              }
+          }
+          location ~ \.php$ {
+              include snippets/fastcgi-php.conf;
+              fastcgi_pass unix:/dev/shm/php-fpm.sock;
+          }
+      - listen: "80"
+        server_name: "ydapi.fncul.com"
+        root: "/srv/ydapi-dadi01-com/public"
+        access_log: "/data/logs/nginx/ydapi.fncul.com.access.log main"
+        error_log: "/data/logs/nginx/ydapi.fncul.com.error.log"
+        index: "index.html index.htm index.php"
+        state: "present"
+        template: "{{ nginx_vhost_template }}"
+        extra_parameters: |
+          location / {
+              if (!-e $request_filename){
+                  rewrite ^/index.php(.*)$ /index.php?s=$1 last;
+                  rewrite ^(.*)$ /index.php?s=$1 last;
+                  break;
+              }
+          }
+          location ~ \.php$ {
+              include snippets/fastcgi-php.conf;
+              fastcgi_pass unix:/dev/shm/php-fpm.sock;
+          }
+  tags: nginx
+
+
+- hosts: localhost
+  roles:
+    - php
+    - php-swoole
+    - php-xhprof
+  vars:
+    php_version: '7.2'
+  tags: php
+
+
+- hosts: localhost
+  roles:
+    - supervisor
+  vars:
+    supervisor_inet_http_server_enable: true
+    supervisor_user: root
+    supervisor_password: 'dd01newsuper'
+    supervisor_programs:
+      - name: 'erp_FixBillCompute'
+        command: php /srv/yderp-dadi01-com/think mq/FixBillCompute
+        configuration: |
+          directory=/srv/yderp-dadi01-com
+          autostart = true
+          autorestart = true
+          startsecs = 10
+          startretries = 3
+          user = www-data
+          stdout_logfile=/var/log/supervisor/erp_FixBillCompute.log
+  tags: supervisor
+
+
+- hosts: localhost
+  roles:
+    - zabbix-agent
+  vars:
+    hostmetadata: Linux
+  tags: zabbix-agent

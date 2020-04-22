@@ -1,0 +1,72 @@
+---
+- name: Add repository for Nginx (Ubuntu).
+  apt_repository: repo='ppa:nginx/stable'
+  when: ansible_distribution == "Ubuntu"
+
+- name: Install Nginx
+  apt: name=nginx state=present
+
+- name: Ensure nginx_vhost_path exists.
+  file:
+    path: "{{ nginx_vhost_path }}"
+    state: directory
+  notify: reload nginx
+
+- name: Ensure nginx_logs_path exists.
+  file:
+    path: "{{ nginx_logs_path }}"
+    state: directory
+  notify: reload nginx
+
+- name: Copy logrotate configuration in place.
+  template:
+    src: "logrotate"
+    dest: "/etc/logrotate.d/nginx"
+    owner: root
+    group: root
+    mode: 0644
+  notify:
+    - reload nginx
+
+- name: Copy nginx configuration in place.
+  template:
+    src: "{{ nginx_conf_template }}"
+    dest: "{{ nginx_conf_file_path }}"
+    owner: root
+    group: root
+    mode: 0644
+  notify:
+    - reload nginx
+
+- name: copy cert
+  copy: src=cert dest=/etc/nginx
+
+- name: Remove default nginx vhost config file (if configured).
+  file:
+    path: "{{ nginx_default_vhost_path }}"
+    state: absent
+  when: nginx_remove_default_vhost
+  notify: restart nginx
+
+- name: Add managed vhost config files.
+  template:
+    src: "{{ item.template|default(nginx_vhost_template) }}"
+    dest: "{{ nginx_vhost_path }}/{{ item.filename|default(item.server_name.split(' ')[0] ~ '.conf') }}"
+    force: yes
+    owner: root
+    group: root
+    mode: 0644
+  when: item.state|default('present') != 'absent'
+  with_items: "{{ nginx_vhosts }}"
+  notify: reload nginx
+  
+- name: Remove managed vhost config files.
+  file:
+    path: "{{ nginx_vhost_path }}/{{ item.filename|default(item.server_name.split(' ')[0] ~ '.conf') }}"
+    state: absent
+  when: item.state|default('present') == 'absent'
+  with_items: "{{ nginx_vhosts }}"
+  notify: reload nginx
+
+- name: Nginx started
+  service: name=nginx state=started enabled=yes

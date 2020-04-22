@@ -1,0 +1,157 @@
+- hosts: localhost
+  roles:
+    - nginx
+  vars:
+    php_version: '7.2'
+    nginx_remove_default_vhost: true
+    nginx_vhosts:
+      - listen: "80"
+        server_name: "member-notification-service.kptest.cn"
+        root: "/srv/member-notification-service/public"
+        access_log: "/var/log/nginx/member-notification-service.kptest.cn.access.log"
+        error_log: "/var/log/nginx/member-notification-service.kptest.cn.error.log"
+        index: "index index.html index.htm"
+        state: "present"
+        template: "{{ nginx_vhost_template }}"
+        extra_parameters: |
+          location / {
+              try_files $uri $uri/ /index.php$is_args$args;
+          }
+          location ~ \.php$ {
+              include snippets/fastcgi-php.conf;
+              fastcgi_pass unix:/dev/shm/php-fpm.sock;
+          }
+      - listen: "80"
+        server_name: "member-notification-service.kpmember.cn"
+        root: "/srv/member-notification-service/public"
+        access_log: "/var/log/nginx/member-notification-service.kpmember.cn.access.log"
+        error_log: "/var/log/nginx/member-notification-service.kpmember.cn.error.log"
+        index: "index index.html index.htm"
+        state: "present"
+        template: "{{ nginx_vhost_template }}"
+        extra_parameters: |
+          location / {
+              try_files $uri $uri/ /index.php$is_args$args;
+          }
+          location ~ \.php$ {
+              include snippets/fastcgi-php.conf;
+              fastcgi_pass unix:/dev/shm/php-fpm.sock;
+          }
+
+- hosts: localhost
+  roles:
+    - php
+    - php-swoole
+    - php-xhprof
+  vars:
+    php_version: '7.2'
+  tags: php
+
+- hosts: localhost
+  roles:
+    - supervisor
+  vars:
+    supervisor_inet_http_server_enable: true
+    supervisor_user: root
+    supervisor_password: 'dd01membersuper'
+    supervisor_programs:
+      - name: 'sms'
+        command: php /srv/member-notification-service/artisan queue:work redis --queue=dd01:member_notification:sms
+        configuration: |
+          autostart = true
+          autorestart = true
+          startsecs = 10
+          startretries = 3
+          user = www-data
+          stdout_logfile=/var/log/supervisor/sms.log
+      - name: 'app_push'
+        command: php /srv/member-notification-service/artisan queue:work redis --queue=dd01:member_notification:app_push
+        configuration: |
+          autostart = true
+          autorestart = true
+          startsecs = 10
+          startretries = 3
+          user = www-data
+          stdout_logfile=/var/log/supervisor/app_push.log
+      - name: 'in_app'
+        command: php /srv/member-notification-service/artisan queue:work redis --queue=dd01:member_notification:in_app
+        configuration: |
+          autostart = true
+          autorestart = true
+          startsecs = 10
+          startretries = 3
+          user = www-data
+          stdout_logfile=/var/log/supervisor/in_app.log
+      - name: 'email'
+        command: php /srv/member-notification-service/artisan queue:work redis --queue=dd01:member_notification:email
+        configuration: |
+          autostart = true
+          autorestart = true
+          startsecs = 10
+          startretries = 3
+          user = www-data
+          stdout_logfile=/var/log/supervisor/email.log
+      - name: 'callback'
+        command: php /srv/member-notification-service/artisan queue:work redis --queue=dd01:member_notification:callback
+        configuration: |
+          autostart = true
+          autorestart = true
+          startsecs = 10
+          startretries = 3
+          user = www-data
+          stdout_logfile=/var/log/supervisor/callback.log
+      - name: 'event_sms'
+        command: php /srv/member-notification-service/artisan queue:work redis --queue=dd01:member_notification:event_sms
+        configuration: |
+          autostart = true
+          autorestart = true
+          startsecs = 10
+          startretries = 3
+          user = www-data
+          stdout_logfile=/var/log/supervisor/event_sms.log
+      - name: 'getstream'
+        command: php /srv/member-notification-service/artisan queue:work redis --queue=dd01:member_notification:getstream
+        configuration: |
+          autostart = true
+          autorestart = true
+          startsecs = 10
+          startretries = 3
+          user = www-data
+          stdout_logfile=/var/log/supervisor/getstream.log
+      - name: 'template_sms'
+        command: php /srv/member-notification-service/artisan queue:work redis --queue=dd01:member_notification:template_sms
+        configuration: |
+          autostart = true
+          autorestart = true
+          startsecs = 10
+          startretries = 3
+          user = www-data
+          stdout_logfile=/var/log/supervisor/template_sms.log
+      - name: 'template_email'
+        command: php /srv/member-notification-service/artisan queue:work redis --queue=dd01:member_notification:template_email
+        configuration: |
+          autostart = true
+          autorestart = true
+          startsecs = 10
+          startretries = 3
+          user = www-data
+          stdout_logfile=/var/log/supervisor/template_email.log
+      - name: 'template_in_app'
+        command: php /srv/member-notification-service/artisan queue:work redis --queue=dd01:member_notification:template_in_app
+        configuration: |
+          autostart = true
+          autorestart = true
+          startsecs = 10
+          startretries = 3
+          user = www-data
+          stdout_logfile=/var/log/supervisor/template_in_app.log
+      - name: 'template_app_push'
+        command: php /srv/member-notification-service/artisan queue:work redis --queue=dd01:member_notification:template_app_push
+        configuration: |
+          autostart = true
+          autorestart = true
+          startsecs = 10
+          startretries = 3
+          user = www-data
+          stdout_logfile=/var/log/supervisor/template_app_push.log
+  tags: supervisor

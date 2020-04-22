@@ -1,0 +1,18 @@
+Terraform创建资源说明文档
+
+AMI说明：
+ubuntu AMI: ami-0933968a713166843
+包含：docker,Open-Falcon所需要的变量
+
+stg环境使用open-falcon修改地址
+heartbeat_ip: "13.250.43.109:6030"
+transfer_ip: "13.250.43.109:8433"
+
+
+centos AMI: ami-0db47cd8e9a752ca0
+包含：docker
+
+dd01账号下terrform创建资源可使用stag-dd01-project-test-example
+
+引用插件
+terraform init -plugin-dir ../../../../dd01-work/terraform.d/plugins/darwin_amd64

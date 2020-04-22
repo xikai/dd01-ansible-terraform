@@ -1,0 +1,137 @@
+- hosts: localhost
+  roles:
+    - nginx
+  vars:
+    nginx_remove_default_vhost: true
+    nginx_vhosts:
+      - listen: "80"
+        server_name: "wechat.fncul.com"
+        root: "/srv/wechat-dadi01-com/public"
+        access_log: "/data/logs/nginx/wechat.fncul.com.access.log main"
+        error_log: "/data/logs/nginx/wechat.fncul.com.error.log"
+        index: "index.html index.htm index.php"
+        state: "present"
+        template: "{{ nginx_vhost_template }}"
+        extra_parameters: |
+          if ($http_x_forwarded_proto != 'https') {
+            rewrite ^ https://$host$request_uri? permanent;
+          }
+
+          if (!-e $request_filename) {
+            rewrite ^/index.php(.*)$ /index.php?s=$1 last;
+            rewrite ^(.*)$ /index.php?s=$1 last;
+            break;
+          }
+          location / {
+              try_files $uri $uri/ =404;
+          }
+          location ~ \.php$ {
+              include snippets/fastcgi-php.conf;
+              fastcgi_pass unix:/dev/shm/php-fpm.sock;
+          }
+      - listen: "80"
+        server_name: "wxapi.fncul.com"
+        root: "/srv/rizili-dadi01-com/public"
+        access_log: "/data/logs/nginx/wxapi.fncul.com.access.log main"
+        error_log: "/data/logs/nginx/wxapi.fncul.com.error.log"
+        index: "index.html index.htm index.php"
+        state: "present"
+        template: "{{ nginx_vhost_template }}"
+        extra_parameters: |
+          if ($http_x_forwarded_proto != 'https') {
+            rewrite ^ https://$host$request_uri? permanent;
+          }
+        
+          if (!-e $request_filename) {
+            rewrite ^/index.php(.*)$ /index.php?s=$1 last;
+            rewrite ^(.*)$ /index.php?s=$1 last;
+            break;
+          }
+          location / {
+              try_files $uri $uri/ =404;
+          }
+          location ~ \.php$ {
+              include snippets/fastcgi-php.conf;
+              fastcgi_pass unix:/dev/shm/php-fpm.sock;
+          }
+      - listen: "80"
+        server_name: "mall-appapi.fncul.com"
+        root: "/srv/app-dadi01-com/public"
+        access_log: "/data/logs/nginx/mall-appapi.fncul.com.access.log main"
+        error_log: "/data/logs/nginx/mall-appapi.fncul.com.error.log"
+        index: "index.html index.htm index.php"
+        state: "present"
+        template: "{{ nginx_vhost_template }}"
+        extra_parameters: |
+          if ($http_x_forwarded_proto != 'https') {
+            rewrite ^ https://$host$request_uri? permanent;
+          }
+
+          location / {
+              if (!-e $request_filename){
+                  rewrite ^/index.php(.*)$ /index.php?s=$1 last;
+                  rewrite ^(.*)$ /index.php?s=$1 last;
+                  break;
+              }
+          }
+          location ~ \.php$ {
+              include snippets/fastcgi-php.conf;
+              fastcgi_pass unix:/dev/shm/php-fpm.sock;
+          }  
+  tags: nginx
+
+
+- hosts: localhost
+  roles:
+    - php
+    - php-swoole
+    - php-xhprof
+  vars:
+    php_version: '7.2'
+  tags: php
+
+
+- hosts: localhost
+  roles:
+    - supervisor
+  vars:
+    supervisor_inet_http_server_enable: true
+    supervisor_user: root
+    supervisor_password: 'dd01newsuper'
+    supervisor_programs:
+      - name: 'app-im'
+        command: php /srv/app-dadi01-com/think queue:work --daemon --queue ImDeal
+        configuration: |
+          autostart = true
+          autorestart = true
+          startsecs = 10
+          startretries = 3
+          user = www-data
+          stdout_logfile=/var/log/supervisor/app-im.log
+      - name: 'app-post-check'
+        command: php /srv/app-dadi01-com/think queue:work --daemon --queue PostAudit
+        configuration: |
+          autostart = true
+          autorestart = true
+          startsecs = 10
+          startretries = 3
+          user = www-data
+          stdout_logfile=/var/log/supervisor/app-post-check.log
+      - name: 'CrmQueue'
+        command: php /srv/app-dadi01-com/think queue:work --daemon --queue CrmQueue
+        configuration: |
+          autostart = true
+          autorestart = true
+          startsecs = 10
+          startretries = 3
+          user = www-data
+          stdout_logfile=/var/log/supervisor/CrmQueue.log
+  tags: supervisor
+
+
+- hosts: localhost
+  roles:
+    - zabbix-agent
+  vars:
+    hostmetadata: Linux
+  tags: zabbix-agent

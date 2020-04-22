@@ -1,0 +1,60 @@
+---
+### php config
+- name: Add repository for PHP (Ubuntu).
+  apt_repository: repo='ppa:ondrej/php'
+  when: ansible_distribution == "Ubuntu"
+
+- name: Install php
+  apt: name=php{{ php_version }} state=present
+  when: ansible_distribution == "Ubuntu"
+
+- name: Install base packages
+  apt: name={{ item }} state=present
+  with_items:
+    - composer
+    - php-pear
+    - openssl
+    - libssh-dev
+    - libhiredis-dev
+    - libnghttp2-dev
+    - libmcrypt-dev
+  when: ansible_distribution == "Ubuntu"
+ 
+- name: Install php default packages
+  apt: name={{ item }} state=present
+  with_items:
+    - php{{ php_version }}-curl
+    - php{{ php_version }}-mysql
+    - php{{ php_version }}-mongodb
+    - php{{ php_version }}-mbstring
+    - php{{ php_version }}-fpm
+    - php{{ php_version }}-dev
+    - php{{ php_version }}-pdo-mysql
+    - php{{ php_version }}-pdo
+    - php{{ php_version }}-opcache
+    - php{{ php_version }}-apcu
+    - php{{ php_version }}-redis
+    - php{{ php_version }}-bcmath
+    - php{{ php_version }}-zip
+    - php{{ php_version }}-dom
+    - php{{ php_version }}-gd
+    - php{{ php_version }}-imagick
+    - php{{ php_version }}-memcached
+    - php{{ php_version }}-wddx
+    - php{{ php_version }}-xml
+    - php{{ php_version }}-xmlreader
+    - php{{ php_version }}-xmlwriter
+    - php{{ php_version }}-xsl
+    - php{{ php_version }}-xmlrpc
+    - php{{ php_version }}-soap  
+  when: ansible_distribution == "Ubuntu"
+
+- name: configure php.ini
+  template: src=php.ini.j2 dest=/etc/php/{{ php_version }}/fpm/php.ini
+  notify:
+     - restart php-fpm
+
+- name: configure php-fpm for www.conf
+  template: src=www.conf.j2 dest=/etc/php/{{ php_version }}/fpm/pool.d/www.conf
+  notify:
+     - restart php-fpm

@@ -1,0 +1,11 @@
+- name: reload kong
+  become: yes
+  service:
+    name: kong
+    state: reloaded
+
+- name: restart kong
+  become: yes
+  service:
+    name: kong
+    state: restarted

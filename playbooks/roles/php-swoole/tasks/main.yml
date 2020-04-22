@@ -1,0 +1,62 @@
+---
+### install php swoole
+
+- name: Download swoole source code
+  get_url:
+    url: "http://pecl.php.net/get/swoole-{{ swoole_version }}.tgz"
+    dest: "/opt/swoole-{{ swoole_version }}.tgz"
+  register: swoole_source
+
+- name: Unpacking swoole
+  unarchive:
+    copy: no
+    dest: /opt/
+    src: "{{ swoole_source.dest }}"
+  when: swoole_source.changed
+  register: swoole_source_unpack
+
+- name: Phpize swoole
+  command: phpize
+  args:
+    chdir: "/opt/swoole-{{ swoole_version }}"
+  register: swoole_phpize
+
+- name: Configure
+  command: ./configure --enable-openssl  --enable-http2  --enable-async-redis
+  args:
+    chdir: "/opt/swoole-{{ swoole_version }}"
+  when: swoole_phpize
+  register: swoole_configure
+
+- name: Make swoole
+  become: yes
+  shell: make && make install
+  args:
+    chdir: "/opt/swoole-{{ swoole_version }}"
+  when: swoole_configure
+  register: swoole_install
+
+
+- name: Add swoole ini
+  lineinfile:
+    path: "/etc/php/{{ php_version }}/mods-available/swoole.ini"
+    line: "extension=swoole.so"
+    create: yes
+  when: swoole_install
+  register: swoole_add_ini
+
+- name: Add link
+  file:
+    src: "/etc/php/{{ php_version }}/mods-available/swoole.ini"
+    dest: "{{ item }}"
+    state: link
+  with_items:
+    - /etc/php/{{ php_version }}/cli/conf.d/swoole.ini
+    - /etc/php/{{ php_version }}/fpm/conf.d/swoole.ini
+  when: swoole_add_ini
+  register: swoole_ini_link_done
+
+- name: Restart php
+  shell: /etc/init.d/php{{ php_version }}-fpm restart
+  when: swoole_ini_link_done
+

@@ -1,0 +1,58 @@
+- name: Install Kong Dependencies
+  apt: name={{ item }} state=present
+  with_items:
+    - gcc
+    - unzip
+    - perl
+    - libpcre3
+    - openssl
+    - procps
+    - libpq-dev
+    - lua5.1
+  when: ansible_distribution == "Ubuntu"
+
+- name: Ensure dependency is installed (Ubuntu).
+  apt: name=apt-transport-https state=present
+
+#Add APT deb repository
+- apt_repository:
+    repo: "deb https://kong.bintray.com/kong-deb {{ ansible_lsb.codename }} main"
+    state: present
+    update_cache: yes
+
+- name: Add an Apt signing key, uses whichever key is at the URL
+  apt_key:
+    url: "https://bintray.com/user/downloadSubjectPublicKey?username=bintray"
+    state: present
+
+- name: Update repositories cache and install kong package
+  apt:
+    name: kong
+    state: present
+    allow_unauthenticated: yes
+
+- name: install luarocks dep
+  become: yes
+  shell: luarocks install luasql-postgres PGSQL_INCDIR=/usr/include/postgresql PGSQL_LIBDIR=/usr/lib && luarocks install lua-resty-uuid && luarocks install lua-protobuf && luarocks install md5 && luarocks install redis-lua
+
+- name: copy default templates conf
+  shell: cp /etc/kong/kong.conf.default /etc/kong/kong.conf
+
+- name: Create kong init.d script
+  become: yes
+  template:
+    dest: /etc/init.d/kong
+    mode: 0750
+    src: initd.j2
+
+- name: Ensure Kong is running
+  become: yes
+  service:
+    name: kong
+    state: started
+
+- name: Ensure kong service is enabled
+  become: yes
+  service:
+    name: kong
+    enabled: yes

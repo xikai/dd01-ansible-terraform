@@ -1,0 +1,838 @@
+- hosts: localhost
+  roles:
+    - nginx
+  vars:
+    nginx_remove_default_vhost: true
+    nginx_vhosts:
+      - listen: "80"
+        server_name: "mall-admin.fncul.com"
+        root: "/srv/admin-shop-dadi01-com/dist"
+        access_log: "/data/logs/nginx/mall-admin.fncul.com.access.log main"
+        error_log: "/data/logs/nginx/mall-admin.fncul.com.error.log"
+        index: "index.html index.htm"
+        state: "present"
+        template: "{{ nginx_vhost_template }}"
+        extra_parameters: |
+          location / {
+              try_files $uri /index.html;
+              proxy_set_header   X-Forwarded-For $remote_addr;
+              proxy_set_header   Host $http_host;
+          }
+          location ^~ /api/crm/
+          {
+              proxy_pass http://ydapi.fncul.com/;
+          }
+          location ^~ /api/erp/
+          {
+              proxy_pass http://serp.fncul.com/;
+          }
+          location ^~ /api/finance/
+          {
+              proxy_pass http://finance-api.fncul.com/;
+          }
+          location ^~ /api/admin/
+          {
+              proxy_pass http://authority-api.fncul.com/admin/;
+          }
+      - listen: "80"
+        server_name: "ucenter-admin.fncul.com"
+        root: "/srv/ucenter-frontend-dadi01-com/dist"
+        access_log: "/data/logs/nginx/ucenter-admin.fncul.com.access.log main"
+        error_log: "/data/logs/nginx/ucenter-admin.fncul.com.error.log"
+        index: "index.html index.htm"
+        state: "present"
+        template: "{{ nginx_vhost_template }}"
+        extra_parameters: |
+          location / {
+              try_files $uri /index.html;
+              proxy_set_header   X-Forwarded-For $remote_addr;
+              proxy_set_header   Host $http_host;
+          }
+          location ~ .*\.(gif|jpg|jpeg|png|bmp|swf)$
+          {
+              expires      30d;
+              access_log off; 
+          }
+          location ~ .*\.(js|css)?$
+          {
+              access_log off; 
+              expires      12h;
+          }
+      - listen: "80"
+        server_name: "admin-center.fncul.com"
+        root: "/srv/admin-center-dadi01-com/dist"
+        access_log: "/data/logs/nginx/admin-center.fncul.com.access.log main"
+        error_log: "/data/logs/nginx/admin-center.fncul.com.error.log"
+        index: "index.html index.htm index.php"
+        state: "present"
+        template: "{{ nginx_vhost_template }}"
+        extra_parameters: |
+          location / {
+              try_files $uri /index.html;
+              proxy_set_header   X-Forwarded-For $remote_addr;
+              proxy_set_header   Host $http_host;
+          }
+          location ^~ /admin/
+          {
+              proxy_pass http://ucenter.fncul.com/admin/;
+          }
+          location ~ .*\.(gif|jpg|jpeg|png|bmp|swf)$
+          {
+              expires      30d;
+              access_log off; 
+          }
+          location ~ .*\.(js|css)?$
+          {
+              access_log off; 
+              expires      12h;
+          }
+      - listen: "80"
+        server_name: "ucenter.fncul.com"
+        root: "/srv/uc-dadi01-com/public"
+        access_log: "/data/logs/nginx/ucenter.fncul.com.access.log main"
+        error_log: "/data/logs/nginx/ucenter.fncul.com.error.log"
+        index: "index.html index.htm index.php"
+        state: "present"
+        template: "{{ nginx_vhost_template }}"
+        extra_parameters: |
+          if (!-e $request_filename) {
+            rewrite ^/index.php(.*)$ /index.php?s=$1 last;
+            rewrite ^(.*)$ /index.php?s=$1 last;
+            break;
+          }
+          location / {
+              try_files $uri $uri/ =404;
+          }
+          location ~ \.php$ {
+              include snippets/fastcgi-php.conf;
+              fastcgi_pass unix:/dev/shm/php-fpm.sock;
+          }   
+      - listen: "80"
+        server_name: "mall-store.fncul.com"
+        root: "/srv/store-frontend-dadi01-com/dist"
+        access_log: "/data/logs/nginx/mall-store.fncul.com.access.log main"
+        error_log: "/data/logs/nginx/mall-store.fncul.com.error.log"
+        index: "index.html index.htm"
+        state: "present"
+        template: "{{ nginx_vhost_template }}"
+        extra_parameters: |
+          location / {
+              try_files $uri /index.html;
+              proxy_set_header   X-Forwarded-For $remote_addr;
+              proxy_set_header   Host $http_host;
+          }
+          location ^~ /api/
+          {
+              proxy_pass http://store-api.fncul.com/;
+          }
+          location ~ .*\.(gif|jpg|jpeg|png|bmp|swf)$
+          {
+              expires      30d;
+              access_log off; 
+          }
+          location ~ .*\.(js|css)?$
+          {
+              access_log off; 
+              expires      12h;
+          }
+      - listen: "80"
+        server_name: "store-api.fncul.com"
+        root: "/srv/store-dadi01-com/public"
+        access_log: "/data/logs/nginx/store-api.fncul.com.access.log main"
+        error_log: "/data/logs/nginx/store-api.fncul.com.error.log"
+        index: "index.html index.htm index.php"
+        state: "present"
+        template: "{{ nginx_vhost_template }}"
+        extra_parameters: |
+          if (!-e $request_filename) {
+            rewrite ^/index.php(.*)$ /index.php?s=$1 last;
+            rewrite ^(.*)$ /index.php?s=$1 last;
+            break;
+          }
+          location / {
+              try_files $uri $uri/ =404;
+          }
+          location ~ \.php$ {
+              include snippets/fastcgi-php.conf;
+              fastcgi_pass unix:/dev/shm/php-fpm.sock;
+          }
+      - listen: "80"
+        server_name: "rzl-wx.fncul.com"
+        root: "/srv/weixin-dadi01-com/dist"
+        access_log: "/data/logs/nginx/rzl-wx.fncul.com.access.log main"
+        error_log: "/data/logs/nginx/rzl-wx.fncul.com.error.log"
+        index: "index.html index.htm"
+        state: "present"
+        template: "{{ nginx_vhost_template }}"
+        extra_parameters: |
+          if_modified_since off;
+          location / {
+              try_files $uri /index.html;
+              proxy_set_header   X-Forwarded-For $remote_addr;
+              proxy_set_header   Host $http_host;
+              expires      -1;
+          }
+          location ^~ /api/
+          {
+              proxy_pass https://mall-appapi.fncul.com/;
+              expires      -1;
+          }
+          location ^~ /wechat/wechat/
+          {
+              proxy_pass https://wxapi.fncul.com/;
+              expires      -1;
+          }
+          location ~ .*\.(gif|jpg|jpeg|png|bmp|swf)$
+          {
+              expires      -1;
+              access_log off; 
+          }
+          location ~ .*\.(js|css)?$
+          {
+              access_log off; 
+              expires      -1;
+          }
+      - listen: "80"
+        server_name: "zyl-wx.fncul.com"
+        root: "/srv/ziyouli-wechat/dist"
+        access_log: "/data/logs/nginx/zyl-wx.fncul.com.access.log main"
+        error_log: "/data/logs/nginx/zyl-wx.fncul.com.error.log"
+        index: "index.html index.htm"
+        state: "present"
+        template: "{{ nginx_vhost_template }}"
+        extra_parameters: |
+          if_modified_since off;
+          location / {
+              try_files $uri /index.html;
+              proxy_set_header   X-Forwarded-For $remote_addr;
+              proxy_set_header   Host $http_host;
+              expires      -1;
+          }
+          location ^~ /api/
+          {
+              proxy_pass https://mall-appapi.fncul.com/;
+              expires      -1;
+          }
+          location ^~ /wechat/wechat/
+          {
+              proxy_pass https://wxapi.fncul.com/;
+              expires      -1;
+          }
+          location ~ .*\.(gif|jpg|jpeg|png|bmp|swf)$
+          {
+              expires      -1;
+              access_log off; 
+          }
+          location ~ .*\.(js|css)?$
+          {
+              access_log off; 
+              expires      -1;
+          }
+      - listen: "80"
+        server_name: "ddtest-wx.fncul.com"
+        root: "/srv/ddtest-wechat/dist"
+        access_log: "/data/logs/nginx/ddtest-wx.fncul.com.access.log main"
+        error_log: "/data/logs/nginx/ddtest-wx.fncul.com.error.log"
+        index: "index.html index.htm"
+        state: "present"
+        template: "{{ nginx_vhost_template }}"
+        extra_parameters: |
+          location / {
+              try_files $uri /index.html;
+              proxy_set_header   X-Forwarded-For $remote_addr;
+              proxy_set_header   Host $http_host;
+              expires      -1;
+          }
+          location ^~ /api/
+          {
+              proxy_pass https://mall-appapi.fncul.com/;
+              expires      -1;
+          }
+          location ^~ /wechat/wechat/
+          {
+              proxy_pass https://wxapi.fncul.com/;
+              expires      -1;
+          }
+          location ~ .*\.(gif|jpg|jpeg|png|bmp|swf)$
+          {
+              expires      -1;
+              access_log off; 
+          }
+          location ~ .*\.(js|css)?$
+          {
+              access_log off; 
+              expires      -1;
+          }
+      - listen: "80"
+        server_name: "per.fncul.com"
+        root: "/srv/permission-dadi01-net/dist"
+        access_log: "/data/logs/nginx/per.fncul.com.access.log main"
+        error_log: "/data/logs/nginx/per.fncul.com.error.log"
+        index: "index.html index.htm"
+        state: "present"
+        template: "{{ nginx_vhost_template }}"
+        extra_parameters: |
+          location / {
+              try_files $uri /index.html;
+              proxy_set_header   X-Forwarded-For $remote_addr;
+              proxy_set_header   Host $http_host;
+          }
+          location ^~ /api/
+          {
+              proxy_pass http://per-api.fncul.com/;
+          }
+      
+          location ^~ /api/1.0/
+          {
+              proxy_pass http://per-api.fncul.com/api/1.0/;
+          }
+          location ~ .*\.(gif|jpg|jpeg|png|bmp|swf)$
+          {
+              expires      30d;
+              access_log off; 
+          }
+          location ~ .*\.(js|css)?$
+          {
+              access_log off; 
+              expires      12h;
+          }
+      - listen: "80"
+        server_name: "per-api.fncul.com"
+        root: "/srv/per-dadi01-net/public"
+        access_log: "/data/logs/nginx/per-api.fncul.com.access.log main"
+        error_log: "/data/logs/nginx/per-api.fncul.com.error.log"
+        index: "index index.html index.htm"
+        state: "present"
+        template: "{{ nginx_vhost_template }}"
+        extra_parameters: |
+          if (!-e $request_filename) {
+            rewrite ^/index.php(.*)$ /index.php?s=$1 last;
+            rewrite ^(.*)$ /index.php?s=$1 last;
+            break;
+          }
+          location / {
+              try_files $uri $uri/ =404;
+          }
+          location ~ \.php$ {
+              include snippets/fastcgi-php.conf;
+              fastcgi_pass unix:/dev/shm/php-fpm.sock;
+          }
+      - listen: "80"
+        server_name: "authority.fncul.com"
+        root: "/srv/authority-frontend-dadi01-com/dist"
+        access_log: "/data/logs/nginx/authority.fncul.com.access.log main"
+        error_log: "/data/logs/nginx/authority.fncul.com.error.log"
+        index: "index.html index.htm"
+        state: "present"
+        template: "{{ nginx_vhost_template }}"
+        extra_parameters: |
+          location / {
+              try_files $uri /index.html;
+              proxy_set_header   X-Forwarded-For $remote_addr;
+              proxy_set_header   Host $http_host;
+          }
+          location ^~ /api/
+          {
+              proxy_pass http://authority-api.fncul.com/;
+          }
+          location ~ .*\.(gif|jpg|jpeg|png|bmp|swf)$
+          {
+              expires      30d;
+              access_log off; 
+          }
+          location ~ .*\.(js|css)?$
+          {
+              access_log off; 
+              expires      12h;
+          }    
+      - listen: "80"
+        server_name: "authority-api.fncul.com"
+        root: "/srv/authority-dadi01-com/public"
+        access_log: "/data/logs/nginx/authority-api.fncul.com.access.log main"
+        error_log: "/data/logs/nginx/authority-api.fncul.com.error.log"
+        index: "index.html index.htm index.php"
+        state: "present"
+        template: "{{ nginx_vhost_template }}"
+        extra_parameters: |
+          if (!-e $request_filename) {
+            rewrite ^/index.php(.*)$ /index.php?s=$1 last;
+            rewrite ^(.*)$ /index.php?s=$1 last;
+            break;
+          }
+          location / {
+              try_files $uri $uri/ =404;
+          }
+          location ~ \.php$ {
+              include snippets/fastcgi-php.conf;
+              fastcgi_pass unix:/dev/shm/php-fpm.sock;
+          }
+      - listen: "80"
+        server_name: "payment.fncul.com"
+        root: "/srv/payment-frontend-dadi01-com/dist"
+        access_log: "/data/logs/nginx/payment.fncul.com.access.log main"
+        error_log: "/data/logs/nginx/payment.fncul.com.error.log"
+        index: "index.html index.htm"
+        state: "present"
+        template: "{{ nginx_vhost_template }}"
+        extra_parameters: |
+          location / {
+              try_files $uri /index.html;
+              proxy_set_header   X-Forwarded-For $remote_addr;
+              proxy_set_header   Host $http_host;
+          }
+          location ^~ /api/
+          {
+              proxy_pass https://paycenter.fncul.com/;
+          }
+          location ~ .*\.(gif|jpg|jpeg|png|bmp|swf)$
+          {
+              expires      30d;
+              access_log off; 
+          }
+          location ~ .*\.(js|css)?$
+          {
+              access_log off; 
+              expires      12h;
+          }
+      - listen: "80"
+        server_name: "paycenter.fncul.com"
+        state: "present"
+        extra_parameters: |
+          location / {
+            return 301 https://paycenter.fncul.com$request_uri;
+          }
+      - listen: "443"
+        server_name: "ssl.paycenter.fncul.com paycenter.fncul.com"
+        root: "/srv/paycenter-dadi01-com/public"
+        access_log: "/data/logs/nginx/paycenter.fncul.com.access.log main"
+        error_log: "/data/logs/nginx/paycenter.fncul.com.error.log"
+        index: "index.html index.htm index.php"
+        state: "present"
+        template: "{{ nginx_vhost_template }}"
+        extra_parameters: |
+          ssl on;
+          ssl_certificate cert/fncul.com.pem;
+          ssl_certificate_key cert/fncul.com.key;
+          ssl_session_timeout 5m;
+          ssl_ciphers ECDHE-RSA-AES128-GCM-SHA256:ECDHE:ECDH:AES:HIGH:!NULL:!aNULL:!MD5:!ADH:!RC4;
+          ssl_protocols TLSv1 TLSv1.1 TLSv1.2;
+          ssl_prefer_server_ciphers on;
+
+          if (!-e $request_filename) {
+            rewrite ^/index.php(.*)$ /index.php?s=$1 last;
+            rewrite ^(.*)$ /index.php?s=$1 last;
+            break;
+          }
+          location / {
+              try_files $uri $uri/ =404;
+              if ($http_origin ~* "^https?://(.+\.)?(dadi01|fncul)\.(com|net|cn)$") {
+                  add_header  Access-Control-Allow-Origin $http_origin;
+                  add_header  Access-Control-Allow-Credentials true;
+                  add_header  Access-Control-Allow-Methods GET,POST,OPTIONS;
+                  add_header  Access-Control-Expose-Headers Content-Length,Content-Range;
+              }
+          }
+          location ~ \.php$ {
+              include snippets/fastcgi-php.conf;
+              fastcgi_pass unix:/dev/shm/php-fpm.sock;
+          }
+      - listen: "80"
+        server_name: "msg-admin.fncul.com"
+        root: "/srv/msg-admin-dadi01-com/dist"
+        access_log: "/data/logs/nginx/msg-admin.fncul.com.access.log main"
+        error_log: "/data/logs/nginx/msg-admin.fncul.com.error.log"
+        index: "index.html index.htm"
+        state: "present"
+        template: "{{ nginx_vhost_template }}"
+        extra_parameters: |
+          location / {
+              try_files $uri /index.html;
+              proxy_set_header   X-Forwarded-For $remote_addr;
+              proxy_set_header   Host $http_host;
+          }
+          location ^~ /api/
+          {
+              proxy_pass http://msg-api.fncul.com/;
+          }
+          location ^~ /api/msg/superadmin/
+          {
+              proxy_pass http://msg-api.fncul.com/sms/superadmin/;
+          }
+          location ^~ /api/msg/push/
+          {
+              proxy_pass http://msg-api.fncul.com/push/;
+          }
+          location ~ .*\.(gif|jpg|jpeg|png|bmp|swf)$
+          {
+              expires      30d;
+              access_log off; 
+          }
+          location ~ .*\.(js|css)?$
+          {
+              access_log off; 
+              expires      12h;
+          }      
+      - listen: "80"
+        server_name: "msg.v.fncul.com"
+        root: "/srv/msg-frontend-dadi01-com/dist"
+        access_log: "/data/logs/nginx/msg.v.fncul.com.access.log main"
+        error_log: "/data/logs/nginx/msg.v.fncul.com.error.log"
+        index: "index.html index.htm"
+        state: "present"
+        template: "{{ nginx_vhost_template }}"
+        extra_parameters: |
+          location / {
+              try_files $uri /index.html;
+              proxy_set_header   X-Forwarded-For $remote_addr;
+              proxy_set_header   Host $http_host;
+          }
+          location ^~ /api/sms/
+          {
+              proxy_pass http://msg-api.fncul.com/sms/;
+          }
+          location ^~ /api/msg/
+          {
+              proxy_pass http://msg-api.fncul.com/sms/;
+          }
+          location ~ .*\.(gif|jpg|jpeg|png|bmp|swf)$
+          {
+              expires      30d;
+              access_log off; 
+          }
+          location ~ .*\.(js|css)?$
+          {
+              access_log off; 
+              expires      12h;
+          }
+      - listen: "80"
+        server_name: "msg-api.fncul.com"
+        root: "/srv/msg-dadi01-com/public"
+        access_log: "/data/logs/nginx/msg-api.fncul.com.access.log main"
+        error_log: "/data/logs/nginx/msg-api.fncul.com.error.log"
+        index: "index.html index.htm index.php"
+        state: "present"
+        template: "{{ nginx_vhost_template }}"
+        extra_parameters: |
+          if (!-e $request_filename) {
+            rewrite ^/index.php(.*)$ /index.php?s=$1 last;
+            rewrite ^(.*)$ /index.php?s=$1 last;
+            break;
+          }
+          location / {
+              try_files $uri $uri/ =404;
+          }
+          location ~ \.php$ {
+              include snippets/fastcgi-php.conf;
+              fastcgi_pass unix:/dev/shm/php-fpm.sock;
+          }
+      - listen: "80"
+        server_name: "parking.fncul.com"
+        root: "/srv/parking-dadi01-com/public"
+        access_log: "/data/logs/nginx/parking.fncul.com.access.log main"
+        error_log: "/data/logs/nginx/parking.fncul.com.error.log"
+        index: "index.html index.htm index.php"
+        state: "present"
+        template: "{{ nginx_vhost_template }}"
+        extra_parameters: |
+          location / {
+              if (!-e $request_filename){
+                  rewrite ^/index.php(.*)$ /index.php?s=$1 last;
+                  rewrite ^(.*)$ /index.php?s=$1 last;
+                  break;
+              }
+          }
+          location ~ \.php$ {
+              include snippets/fastcgi-php.conf;
+              fastcgi_pass unix:/dev/shm/php-fpm.sock;
+          }
+      - listen: "80"
+        server_name: "finance-api.fncul.com"
+        root: "/srv/finance-dadi01-com/public"
+        access_log: "/data/logs/nginx/finance-api.fncul.com.access.log main"
+        error_log: "/data/logs/nginx/finance-api.fncul.com.error.log"
+        index: "index.html index.htm index.php"
+        state: "present"
+        template: "{{ nginx_vhost_template }}"
+        extra_parameters: |
+          location / {
+              if (!-e $request_filename){
+                  rewrite ^/index.php(.*)$ /index.php?s=$1 last;
+                  rewrite ^(.*)$ /index.php?s=$1 last;
+                  break;
+              }
+          }
+          location ~ \.php$ {
+              include snippets/fastcgi-php.conf;
+              fastcgi_pass unix:/dev/shm/php-fpm.sock;
+          }
+      - listen: "80"
+        server_name: "wifi.fncul.com"
+        state: "present"
+        extra_parameters: |
+          location / {
+            return 301 https://wifi.fncul.com$request_uri;
+          }   
+      - listen: "443"
+        server_name: "ssl.wifi.fncul.com wifi.fncul.com"
+        root: "/srv/web-wifi-auth/dist"
+        access_log: "/data/logs/nginx/wifi.fncul.com.access.log main"
+        error_log: "/data/logs/nginx/wifi.fncul.com.error.log"
+        index: "index.html index.htm"
+        state: "present"
+        template: "{{ nginx_vhost_template }}"
+        extra_parameters: |
+          ssl on;
+          ssl_certificate cert/fncul.com.pem;
+          ssl_certificate_key cert/fncul.com.key;
+          ssl_session_timeout 5m;
+          ssl_ciphers ECDHE-RSA-AES128-GCM-SHA256:ECDHE:ECDH:AES:HIGH:!NULL:!aNULL:!MD5:!ADH:!RC4;
+          ssl_protocols TLSv1 TLSv1.1 TLSv1.2;
+          ssl_prefer_server_ciphers on;
+          
+          location / {
+              try_files $uri /index.html;
+              proxy_set_header   X-Forwarded-For $remote_addr;
+              proxy_set_header   Host $http_host;
+          }
+          location ^~ /api/
+          {
+              proxy_pass https://wifi-api.fncul.com/;
+          }
+          location ~ .*\.(gif|jpg|jpeg|png|bmp|swf)$
+          {
+              expires      30d;
+              access_log off; 
+          }
+          location ~ .*\.(js|css)?$
+          {
+              access_log off; 
+              expires      1h;
+          }
+      - listen: "80"
+        server_name: "wifi-api.fncul.com"
+        state: "present"
+        extra_parameters: |
+          location / {
+            return 301 https://wifi-api.fncul.com$request_uri;
+          }          
+      - listen: "443"
+        server_name: "ssl.wifi-api.fncul.com wifi-api.fncul.com"
+        root: "/srv/wifi-api-dadi01-com/public"
+        access_log: "/data/logs/nginx/wifi-api.fncul.com.access.log main"
+        error_log: "/data/logs/nginx/wifi-api.fncul.com.error.log"
+        index: "index.html index.htm index.php"
+        state: "present"
+        template: "{{ nginx_vhost_template }}"
+        extra_parameters: |
+          ssl on;
+          ssl_certificate cert/fncul.com.pem;
+          ssl_certificate_key cert/fncul.com.key;
+          ssl_session_timeout 5m;
+          ssl_ciphers ECDHE-RSA-AES128-GCM-SHA256:ECDHE:ECDH:AES:HIGH:!NULL:!aNULL:!MD5:!ADH:!RC4;
+          ssl_protocols TLSv1 TLSv1.1 TLSv1.2;
+          ssl_prefer_server_ciphers on;
+                  
+          location / {
+              if (!-e $request_filename){
+                  rewrite ^/index.php(.*)$ /index.php?s=$1 last;
+                  rewrite ^(.*)$ /index.php?s=$1 last;
+                  break;
+              }
+          }
+          location ~ \.php$ {
+              include snippets/fastcgi-php.conf;
+              fastcgi_pass unix:/dev/shm/php-fpm.sock;
+          }          
+      - listen: "80"
+        server_name: "ws.fncul.com"
+        root: "/srv/swoole-websocket-server/public"
+        access_log: "/data/logs/nginx/ws.fncul.com.access.log main"
+        error_log: "/data/logs/nginx/ws.fncul.com.error.log"
+        index: "index.html index.htm index.php"
+        state: "present"
+        template: "{{ nginx_vhost_template }}"
+        extra_parameters: |
+          location / {
+              proxy_pass   http://127.0.0.1:9501;
+          }
+      - listen: "80"
+        server_name: "mid.fncul.com"
+        root: "/srv/hardware-middleware"
+        access_log: "/data/logs/nginx/mid.fncul.com.access.log main"
+        error_log: "/data/logs/nginx/mid.fncul.com.error.log"
+        index: "index.html index.htm index.php"
+        state: "present"
+        template: "{{ nginx_vhost_template }}"
+        extra_parameters: |
+          location / {
+              proxy_pass   http://127.0.0.1:11111;
+          }
+      - listen: "80"
+        server_name: "gw.fncul.com"
+        root: "/srv/newretail-api-gateway"
+        access_log: "/data/logs/nginx/gw.fncul.com.access.log main"
+        error_log: "/data/logs/nginx/gw.fncul.com.error.log"
+        index: "index.html index.htm index.php"
+        state: "present"
+        template: "{{ nginx_vhost_template }}"
+        extra_parameters: |
+          location / {
+              proxy_pass   http://127.0.0.1:8000;
+          }
+      - listen: "443"
+        server_name: "ssl.gw.fncul.com gw.fncul.com"
+        root: "/srv/newretail-api-gateway"
+        access_log: "/data/logs/nginx/gw.fncul.com.access.log main"
+        error_log: "/data/logs/nginx/gw.fncul.com.error.log"
+        index: "index.html index.htm index.php"
+        state: "present"
+        template: "{{ nginx_vhost_template }}"
+        extra_parameters: |
+          ssl on;
+          ssl_certificate cert/fncul.com.pem;
+          ssl_certificate_key cert/fncul.com.key;
+          ssl_session_timeout 5m;
+          ssl_ciphers ECDHE-RSA-AES128-GCM-SHA256:ECDHE:ECDH:AES:HIGH:!NULL:!aNULL:!MD5:!ADH:!RC4;
+          ssl_protocols TLSv1 TLSv1.1 TLSv1.2;
+          ssl_prefer_server_ciphers on;
+  
+          location / {
+              proxy_pass   http://127.0.0.1:8000;
+          }
+      - listen: "80"
+        server_name: "mp-api.fncul.com"
+        root: "/srv/member-partner-dadi01-com/public"
+        access_log: "/data/logs/nginx/mp-api.fncul.com.access.log main"
+        error_log: "/data/logs/nginx/mp-api.fncul.com.error.log"
+        index: "index.html index.htm index.php"
+        state: "present"
+        template: "{{ nginx_vhost_template }}"
+        extra_parameters: |
+          location / {
+              if (!-e $request_filename){
+                  rewrite ^/index.php(.*)$ /index.php?s=$1 last;
+                  rewrite ^(.*)$ /index.php?s=$1 last;
+                  break;
+              }
+          }
+          location ~ \.php$ {
+              include snippets/fastcgi-php.conf;
+              fastcgi_pass unix:/dev/shm/php-fpm.sock;
+          }
+  tags: nginx
+
+
+- hosts: localhost
+  roles:
+    - php
+    - php-swoole
+    - php-xhprof
+  vars:
+    php_version: '7.2'
+  tags: php
+
+- hosts: localhost
+  roles:
+    - kong
+  tags: kong
+
+- hosts: localhost
+  roles:
+    - supervisor
+  vars:
+    supervisor_inet_http_server_enable: true
+    supervisor_user: root
+    supervisor_password: 'dd01newsuper'
+    supervisor_programs:
+      - name: 'msg-mobile'
+        command: php /srv/msg-dadi01-com/artisan queue:work --queue=push_aliyun --tries=8
+        configuration: |
+          process_name=%(program_name)s_%(process_num)s
+          numprocs=2
+          autostart = true
+          autorestart = true
+          stopasgroup=true
+          killasgroup=true
+          startsecs = 10
+          startretries = 3
+          user = www-data
+          stdout_logfile=/var/log/supervisor/msg-mobile.log
+      - name: 'scan-image'
+        command: php /srv/msg-dadi01-com/artisan queue:work --queue=scan_image_check --tries=8
+        configuration: |
+          process_name=%(program_name)s_%(process_num)s
+          numprocs=2
+          autostart = true
+          autorestart = true
+          stopasgroup=true
+          killasgroup=true
+          startsecs = 10
+          startretries = 3
+          user = www-data
+          stdout_logfile=/var/log/supervisor/scan-image.log
+      - name: 'scan-video'
+        command: php /srv/msg-dadi01-com/artisan queue:work --queue=scan_video_check --tries=8
+        configuration: |
+          process_name=%(program_name)s_%(process_num)s
+          numprocs=2
+          autostart = true
+          autorestart = true
+          stopasgroup=true
+          killasgroup=true
+          startsecs = 10
+          startretries = 3
+          user = www-data
+          stdout_logfile=/var/log/supervisor/scan-video.log
+      - name: 'parking-openbrake'
+        command: php /srv/parking-dadi01-com/think queue:work --daemon --queue OpenBrake
+        configuration: |
+          autostart = true
+          autorestart = true
+          startsecs = 10
+          startretries = 3
+          user = www-data
+          stdout_logfile=/var/log/supervisor/parking-openbrake.log
+      - name: 'VoucherJob'
+        command: php /srv/finance-dadi01-com/think queue:work --daemon --queue VoucherJob
+        configuration: |
+          autostart = true
+          autorestart = true
+          startsecs = 10
+          startretries = 3
+          user = www-data
+          stdout_logfile=/var/log/supervisor/VoucherJob.log
+      - name: 'msg-query'
+        command: /srv/msg-query/bin/consume SmsInternal Run
+        configuration: |
+          process_name=%(program_name)s_%(process_num)s
+          numprocs=5
+          directory=/srv/msg-query/bin/
+          autostart = true
+          autorestart = true
+          stopasgroup=true
+          killasgroup=true
+          startsecs = 10
+          startretries = 3
+          user = www-data
+          stdout_logfile=/var/log/supervisor/%(program_name)s_%(process_num)s.log
+      - name: 'websocket'
+        command: php /srv/swoole-websocket-server/server start
+        configuration: |
+          directory=/srv/swoole-websocket-server/
+          autostart = true
+          autorestart = true
+          startsecs = 10
+          startretries = 3
+          user = www-data
+          stdout_logfile=/var/log/supervisor/websocket.log
+      - name: 'dd01_member_consumers'
+        command: /usr/local/openresty/bin/resty /usr/local/share/lua/5.1/kong/plugins/authentication/rabbitmq-cli/dd01_member_consumers.lua
+        configuration: |
+          directory=/usr/local/share/lua/5.1/kong/plugins/authentication/rabbitmq-cli/
+          autostart = true
+          autorestart = true
+          startsecs = 10
+          startretries = 3
+          user = www-data
+          stdout_logfile=/var/log/supervisor/dd01_member_consumers.log
+  tags: supervisor
